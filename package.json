@@ -8,9 +8,9 @@
   "homepage": "https://crail.jesh.dev",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jeshurun-io/crail-ui.git"
+    "url": "git+https://github.com/jesh-io/crail-ui.git"
   },
-  "bugs": "https://github.com/jeshurun-io/crail-ui/issues",
+  "bugs": "https://github.com/jesh-io/crail-ui/issues",
   "keywords": [
     "mcp",
     "model-context-protocol",
