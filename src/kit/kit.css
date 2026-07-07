@@ -1715,3 +1715,83 @@
   color: var(--ink-3);
   margin-top: 3px;
 }
+
+/* ═══ ToolUseBlock — the host's own tool-call format ═══════════════ */
+
+.mcp-tooluse { margin: 14px 0; }
+.mcp-tooluse__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px 8px;
+}
+.mcp-tooluse__mark {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  border-radius: 5px;
+  background: var(--crail);
+  color: var(--on-crail);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.mcp-tooluse__server { font: 550 var(--text-md) / 1 var(--font-sans); color: var(--ink-1); }
+.mcp-tooluse__tool { font: 450 var(--text-md) / 1 var(--font-sans); color: var(--ink-3); }
+.mcp-tooluse__spacer { flex: 1; }
+.mcp-tooluse__code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.mcp-tooluse__code:hover { background: var(--paper-2); color: var(--ink-1); }
+.mcp-tooluse__code--on { background: var(--paper-2); color: var(--crail-strong); }
+.mcp-tooluse__params {
+  margin: 0 0 8px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--code-bg);
+  font: 400 var(--text-sm) / 1.6 var(--font-mono);
+  color: var(--ink-2);
+  overflow-x: auto;
+}
+.mcp-tooluse__card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper-0);
+  overflow: hidden;
+}
+.mcp-tooluse__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--ink-1);
+  font: 450 var(--text-md) / 1.35 var(--font-sans);
+}
+.mcp-tooluse__row:hover .mcp-tooluse__chev { color: var(--ink-1); }
+.mcp-tooluse__chev {
+  flex: none;
+  color: var(--ink-3);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.mcp-tooluse__chev--open { transform: rotate(90deg); }
+.mcp-tooluse__summary { flex: 1; min-width: 0; }
+.mcp-tooluse__meta { flex: none; font: 400 var(--text-sm) / 1 var(--font-sans); color: var(--ink-3); }
+.mcp-tooluse__body { padding: 2px 16px 16px 39px; }
+@media (max-width: 700px) { .mcp-tooluse__body { padding-left: 16px; } }

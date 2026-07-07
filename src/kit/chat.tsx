@@ -197,6 +197,82 @@ export function ToolCallBlock({
   );
 }
 
+/* Tool use — the host's own tool-call format ------------------------- */
+
+/**
+ * Matches how claude.ai actually renders an MCP tool call: a quiet header
+ * line (server mark · server name · muted tool name · a code toggle), then
+ * the result as a rounded card with a chevron collapse inside it. Collapsed,
+ * the card shows a one-line summary.
+ */
+export function ToolUseBlock({
+  server,
+  tool,
+  mark,
+  summary,
+  meta,
+  params,
+  defaultOpen = true,
+  children,
+}: {
+  server: string;
+  tool: string;
+  /** The server's avatar — a logo, or a colored initial tile. */
+  mark?: ReactNode;
+  /** One-line content shown while collapsed (and beside the chevron when expanded). */
+  summary?: ReactNode;
+  /** Right-aligned meta on the summary row, e.g. "v2.0 · 3mo ago". */
+  meta?: ReactNode;
+  params?: object;
+  defaultOpen?: boolean;
+  children?: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const [showCode, setShowCode] = useState(false);
+  return (
+    <div {...kit("ToolUseBlock")} className="mcp-tooluse">
+      <div className="mcp-tooluse__head">
+        <span className="mcp-tooluse__mark">
+          {mark ?? <Icon name="wrench" size={13} />}
+        </span>
+        <span className="mcp-tooluse__server">{server}</span>
+        <span className="mcp-tooluse__tool">{tool}</span>
+        <span className="mcp-tooluse__spacer" />
+        {params && (
+          <button
+            className={cx("mcp-tooluse__code", showCode && "mcp-tooluse__code--on")}
+            onClick={() => setShowCode(!showCode)}
+            aria-label="Show request"
+            title="Show request"
+          >
+            <Icon name="code" size={14} />
+          </button>
+        )}
+      </div>
+      {showCode && params && (
+        <pre className="mcp-tooluse__params">{JSON.stringify(params, null, 2)}</pre>
+      )}
+      <div className="mcp-tooluse__card">
+        <button
+          className="mcp-tooluse__row"
+          onClick={() => setOpen(!open)}
+          aria-expanded={open}
+        >
+          <Icon
+            name="chevronRight"
+            size={13}
+            strokeWidth={2.2}
+            className={cx("mcp-tooluse__chev", open && "mcp-tooluse__chev--open")}
+          />
+          {summary && <span className="mcp-tooluse__summary">{summary}</span>}
+          {meta && <span className="mcp-tooluse__meta">{meta}</span>}
+        </button>
+        {open && children && <div className="mcp-tooluse__body">{children}</div>}
+      </div>
+    </div>
+  );
+}
+
 /* Code block -------------------------------------------------------- */
 
 export function CodeBlock({
@@ -215,6 +291,59 @@ export function CodeBlock({
       <pre className="mcp-code__pre">{children}</pre>
     </div>
   );
+}
+
+/* JSON block — CodeBlock with theme-matched JSON highlighting -------- */
+
+function highlightJson(text: string): ReactNode[] {
+  const out: ReactNode[] = [];
+  const re =
+    /("(?:[^"\\]|\\.)*")(\s*:)|("(?:[^"\\]|\\.)*")|\b(true|false|null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  let k = 0;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    if (m[1] != null) {
+      out.push(
+        <span key={k++} className="tok-kw">
+          {m[1]}
+        </span>,
+        m[2],
+      );
+    } else if (m[3] != null) {
+      out.push(
+        <span key={k++} className="tok-str">
+          {m[3]}
+        </span>,
+      );
+    } else if (m[4] != null) {
+      out.push(
+        <span key={k++} className="tok-num">
+          {m[4]}
+        </span>,
+      );
+    } else if (m[5] != null) {
+      out.push(
+        <span key={k++} className="tok-num">
+          {m[5]}
+        </span>,
+      );
+    }
+    last = re.lastIndex;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+
+export function JsonBlock({
+  data,
+  language = "json",
+}: {
+  data: unknown;
+  language?: string;
+}) {
+  return <CodeBlock language={language}>{highlightJson(JSON.stringify(data, null, 2))}</CodeBlock>;
 }
 
 /* Tokens for fake syntax highlighting in showcase code samples */
