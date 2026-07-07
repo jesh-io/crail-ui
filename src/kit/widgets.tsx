@@ -15,14 +15,17 @@ export function StatCard({
   value,
   delta,
   direction = "flat",
+  end,
 }: {
   label: string;
   value: string;
   delta?: string;
   direction?: "up" | "down" | "flat";
+  /** Optional trailing visual — a Sparkline, BulletGauge, or badge. */
+  end?: ReactNode;
 }) {
-  return (
-    <div {...kit("StatCard")} className="mcp-stat">
+  const body = (
+    <>
       <span className="mcp-stat__label">{label}</span>
       <span className="mcp-stat__value">{value}</span>
       {delta && (
@@ -37,6 +40,171 @@ export function StatCard({
           )}
           {delta}
         </span>
+      )}
+    </>
+  );
+  if (!end) {
+    return (
+      <div {...kit("StatCard")} className="mcp-stat">
+        {body}
+      </div>
+    );
+  }
+  return (
+    <div {...kit("StatCard")} className="mcp-stat mcp-stat--row">
+      <span className="mcp-stat__main">{body}</span>
+      <span className="mcp-stat__end">{end}</span>
+    </div>
+  );
+}
+
+/* Sparkline — a bare trend line for stat cards and table cells ------- */
+
+export function Sparkline({
+  points,
+  width = 120,
+  height = 36,
+  tone = "crail",
+}: {
+  points: number[];
+  width?: number;
+  height?: number;
+  tone?: "crail" | "denim" | "moss" | "ink";
+}) {
+  const max = Math.max(...points);
+  const min = Math.min(...points);
+  const span = max - min || 1;
+  const pad = 3;
+  const step = (width - pad * 2) / (points.length - 1);
+  const y = (v: number) => pad + (height - pad * 2) * (1 - (v - min) / span);
+  const d = points
+    .map((v, i) => `${i === 0 ? "M" : "L"}${(pad + i * step).toFixed(1)},${y(v).toFixed(1)}`)
+    .join(" ");
+  const stroke =
+    tone === "ink"
+      ? "var(--ink-2)"
+      : tone === "denim"
+        ? "var(--denim)"
+        : tone === "moss"
+          ? "var(--moss)"
+          : "var(--crail)";
+  return (
+    <svg
+      {...kit("Sparkline")}
+      viewBox={`0 0 ${width} ${height}`}
+      width={width}
+      height={height}
+      role="img"
+      aria-label={`trend of ${points.length} points, latest ${points[points.length - 1]}`}
+    >
+      <path d={d} fill="none" stroke={stroke} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle
+        cx={pad + (points.length - 1) * step}
+        cy={y(points[points.length - 1])}
+        r="3"
+        fill={stroke}
+        stroke="var(--paper-0)"
+        strokeWidth="1.5"
+      />
+    </svg>
+  );
+}
+
+/* BulletGauge — a measure against its target ------------------------- */
+
+export function BulletGauge({
+  value,
+  target,
+  max,
+  unit = "",
+  higherIsBetter = true,
+}: {
+  value: number;
+  target: number;
+  max: number;
+  unit?: string;
+  higherIsBetter?: boolean;
+}) {
+  const failing = higherIsBetter ? value < target : value > target;
+  const pctValue = Math.min(100, (value / max) * 100);
+  const pctTarget = Math.min(100, (target / max) * 100);
+  return (
+    <div {...kit("BulletGauge")} className="mcp-bullet" role="meter" aria-valuenow={value}>
+      <div className="mcp-bullet__rail">
+        <div
+          className={cx("mcp-bullet__fill", failing && "mcp-bullet__fill--failing")}
+          style={{ width: `${pctValue}%` }}
+        />
+        <div className="mcp-bullet__tick" style={{ left: `${pctTarget}%` }} />
+      </div>
+      <div className="mcp-bullet__caption">
+        <span className={cx("mcp-bullet__value", failing && "mcp-bullet__value--failing")}>
+          {value}
+          {unit} · {failing ? "below target" : "on target"}
+        </span>
+        <span className="mcp-bullet__target">
+          target {target}
+          {unit}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* StackedBarChart — segmented bars with a legend ---------------------- */
+
+export type SegmentTone = "crail" | "moss" | "amber" | "red" | "denim" | "ink";
+
+export function StackedBarChart({
+  title,
+  subtitle,
+  data,
+  legend,
+}: {
+  title: string;
+  subtitle?: string;
+  data: Array<{ label: string; segments: Array<{ value: number; tone: SegmentTone }> }>;
+  legend?: Array<{ label: string; tone: SegmentTone }>;
+}) {
+  const max = Math.max(...data.map((d) => d.segments.reduce((s, x) => s + x.value, 0)));
+  return (
+    <div {...kit("StackedBarChart")} className="mcp-card mcp-chartcard">
+      <div className="mcp-chartcard__head">
+        <span className="mcp-chartcard__title">{title}</span>
+        {subtitle && <span className="mcp-chartcard__sub">{subtitle}</span>}
+      </div>
+      <div className="mcp-sbar">
+        {data.map((d) => {
+          const total = d.segments.reduce((s, x) => s + x.value, 0);
+          return (
+            <div key={d.label} className="mcp-sbar__col" title={`${d.label}: ${total}`}>
+              <span className="mcp-sbar__total">{total}</span>
+              <div className="mcp-sbar__stack" style={{ height: `${(total / max) * 100}%` }}>
+                {[...d.segments].reverse().map(
+                  (s, i) =>
+                    s.value > 0 && (
+                      <div
+                        key={i}
+                        className={`mcp-sbar__seg mcp-sbar__seg--${s.tone}`}
+                        style={{ flexGrow: s.value }}
+                      />
+                    ),
+                )}
+              </div>
+              <span className="mcp-sbar__x">{d.label}</span>
+            </div>
+          );
+        })}
+      </div>
+      {legend && (
+        <div className="mcp-chart-legend">
+          {legend.map((l) => (
+            <span key={l.label} className="mcp-chart-legend__item">
+              <i className={`mcp-chart-legend__swatch mcp-sbar__seg--${l.tone}`} />
+              {l.label}
+            </span>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -246,10 +414,15 @@ export function DataTable({
   columns,
   rows,
   footer,
+  onRowClick,
+  activeRow,
 }: {
   columns: Column[];
   rows: ReactNode[][];
   footer?: { summary: string; action?: ReactNode };
+  /** Row-level selection: rows become clickable; activeRow highlights one. */
+  onRowClick?: (rowIndex: number) => void;
+  activeRow?: number;
 }) {
   return (
     <div {...kit("DataTable")} className="mcp-table-wrap">
@@ -278,7 +451,11 @@ export function DataTable({
           </thead>
           <tbody>
             {rows.map((r, ri) => (
-              <tr key={ri}>
+              <tr
+                key={ri}
+                className={cx(onRowClick && "is-clickable", activeRow === ri && "is-active")}
+                onClick={onRowClick ? () => onRowClick(ri) : undefined}
+              >
                 {r.map((cell, ci) => (
                   <td key={ci} className={cx(columns[ci]?.numeric && "is-num")}>
                     {cell}
@@ -547,12 +724,12 @@ export function ElicitationCard({
 
 /* Progress tracker & checklist -------------------------------------------- */
 
-export type StepState = "done" | "active" | "pending";
+export type StepState = "done" | "active" | "pending" | "error";
 
 export function ProgressTracker({
   steps,
 }: {
-  steps: Array<{ title: string; sub?: string; state: StepState }>;
+  steps: Array<{ title: string; sub?: string; state: StepState; glyph?: ReactNode }>;
 }) {
   return (
     <div {...kit("ProgressTracker")} className="mcp-steps">
@@ -560,7 +737,12 @@ export function ProgressTracker({
         <div key={s.title} className={`mcp-step mcp-step--${s.state}`}>
           <span className="mcp-step__rail" />
           <span className="mcp-step__dot">
-            {s.state === "done" && <Icon name="check" size={11} strokeWidth={3} />}
+            {s.glyph ??
+              (s.state === "done" ? (
+                <Icon name="check" size={11} strokeWidth={3} />
+              ) : s.state === "error" ? (
+                <Icon name="x" size={11} strokeWidth={3} />
+              ) : null)}
           </span>
           <span>
             <div className="mcp-step__title">{s.title}</div>

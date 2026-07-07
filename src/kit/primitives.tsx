@@ -554,6 +554,36 @@ export function Menu({
   );
 }
 
+/* Modal — composable dialog (rendered in place; wrap in your own overlay) */
+
+export function Modal({
+  title,
+  sub,
+  children,
+  footer,
+  onClose,
+}: {
+  title: string;
+  sub?: string;
+  children: ReactNode;
+  footer?: ReactNode;
+  onClose?: () => void;
+}) {
+  return (
+    <div {...kit("Modal")} className="mcp-modal" role="dialog" aria-label={title}>
+      <div className="mcp-modal__head">
+        <span>
+          <span className="mcp-modal__title">{title}</span>
+          {sub && <span className="mcp-modal__sub">{sub}</span>}
+        </span>
+        {onClose && <IconButton icon="x" label="Close" size="sm" onClick={onClose} />}
+      </div>
+      <div className="mcp-modal__body">{children}</div>
+      {footer && <div className="mcp-modal__foot">{footer}</div>}
+    </div>
+  );
+}
+
 /* Modal (rendered in place, for showcase) -------------------------- */
 
 export function ModalExample({

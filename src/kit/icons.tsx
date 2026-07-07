@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import type { CSSProperties, JSX } from "react";
 
 /* Minimal stroke icon set, 24-unit grid, 1.75 stroke — matches the
    rounded, quiet iconography of the assistant apps. */
