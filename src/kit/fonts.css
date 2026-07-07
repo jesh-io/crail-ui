@@ -1,0 +1,6 @@
+/* Crail's three voices, self-hosted via Fontsource.
+   Optional — without this import the kit falls back to system faces. */
+@import "@fontsource-variable/source-serif-4/index.css";
+@import "@fontsource-variable/source-serif-4/wght-italic.css";
+@import "@fontsource-variable/hanken-grotesk/index.css";
+@import "@fontsource-variable/jetbrains-mono/index.css";
