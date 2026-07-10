@@ -58,8 +58,7 @@
   },
   "dependencies": {
     "@fontsource-variable/hanken-grotesk": "^5.1.0",
-    "@fontsource-variable/jetbrains-mono": "^5.1.0",
-    "@fontsource-variable/source-serif-4": "^5.1.0"
+    "@fontsource-variable/jetbrains-mono": "^5.1.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.12",

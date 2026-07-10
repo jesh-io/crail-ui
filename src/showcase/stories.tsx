@@ -165,27 +165,27 @@ const typography: Story = {
   title: "Typography",
   lede: (
     <>
-      Three voices: a serif for the assistant and for display, a quiet grotesque
-      for interface chrome, and a mono for anything the machine said verbatim.
+      Two voices: one quiet grotesque carrying display, prose, and interface
+      chrome, and a mono for anything the machine said verbatim.
     </>
   ),
   sections: [
     {
-      title: "The three families",
+      title: "The two families",
       render: () => (
         <div>
           <div className="sb-type-row">
-            <span className="sb-type-meta">serif · display<br />Source Serif 4</span>
+            <span className="sb-type-meta">display<br />Hanken Grotesk</span>
             <span style={{ font: "600 2.1rem/1.2 var(--font-serif)", letterSpacing: "-0.02em" }}>
               Tools that feel native to the assistant
             </span>
           </div>
           <div className="sb-type-row">
-            <span className="sb-type-meta">serif · assistant<br />17 / 1.65</span>
+            <span className="sb-type-meta">assistant<br />17 / 1.65</span>
             <span style={{ font: "400 1.0625rem/1.65 var(--font-serif)" }}>
-              The assistant speaks in a book face. Prose set this way reads as a
-              voice, not as interface — which is exactly the distinction the rest
-              of the kit is built around.
+              The assistant speaks in the same grotesque as the interface —
+              set larger and looser, so prose reads as a voice while staying
+              of one piece with the chrome around it.
             </span>
           </div>
           <div className="sb-type-row">
@@ -728,7 +728,7 @@ const messages: Story = {
   lede: (
     <>
       The core asymmetry: you speak in a tinted bubble on the right, the
-      assistant answers as serif prose on the page. No avatar, no bubble — the
+      assistant answers as open prose on the page. No avatar, no bubble — the
       typography is the identity.
     </>
   ),

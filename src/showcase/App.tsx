@@ -275,7 +275,7 @@ function HomePage({ go }: { go: (r: string) => void }) {
         <p className="sb-lede" style={{ maxWidth: 660 }}>
           Most MCP tools bolt a foreign interface onto a conversation. Crail
           takes the opposite view: match the host's design language — warm
-          paper, a serif voice, one terracotta accent — so a tool result reads
+          paper, one quiet grotesque, one terracotta accent — so a tool result reads
           as part of the reply, not an ad inside it. Primitives, chat chrome,
           and tool widgets, themed by CSS tokens, shown here both raw and inside
           full rendered conversations.

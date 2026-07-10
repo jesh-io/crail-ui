@@ -1,12 +1,15 @@
 /* ─────────────────────────────────────────────────────────────
    Crail — design tokens
    An MCP tool UI kit in Claude's design language.
-   Warm paper, warm ink, terracotta accent, serif assistant voice.
+   Warm paper, warm ink, terracotta accent, one grotesque voice.
    ───────────────────────────────────────────────────────────── */
 
 :root {
-  /* Type families */
-  --font-serif: "Source Serif 4 Variable", "Tiempos Text", Georgia, serif;
+  /* Type families. --font-serif is the DISPLAY/PROSE slot — it now
+     carries the same grotesque as the UI, so one family ties the
+     chrome, the prose, and the headlines together. */
+  --font-serif: "Hanken Grotesk Variable", "Styrene B", -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-sans: "Hanken Grotesk Variable", "Styrene B", -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo,
