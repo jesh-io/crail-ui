@@ -120,6 +120,20 @@ body {
 .sb-theme-toggle:hover { border-color: var(--line-strong); }
 .sb-version { font: 400 0.6875rem/1 var(--font-mono); color: var(--ink-3); }
 
+.sb-gh-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 500 0.75rem/1 var(--font-sans);
+  color: var(--ink-2);
+  text-decoration: none;
+  border-radius: 7px;
+  padding: 6px 8px;
+  margin-left: -8px;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+.sb-gh-link:hover { background: var(--paper-3); color: var(--ink-1); }
+
 /* ── Main column ─────────────────────────────────────────────── */
 
 .sb-main {
@@ -304,6 +318,47 @@ body {
 }
 [data-theme="dark"] .sb-hero__title em { color: var(--crail); }
 
+.sb-hero__actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+.sb-install {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font: 500 0.8125rem/1 var(--font-mono);
+  color: var(--ink-1);
+  background: var(--paper-0);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 10px 14px 10px 16px;
+  cursor: pointer;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.sb-install:hover { border-color: var(--line-strong); box-shadow: var(--shadow-sm); }
+.sb-install code { font: inherit; }
+.sb-install svg { color: var(--ink-3); }
+.sb-install__prompt { color: var(--crail-strong); user-select: none; }
+[data-theme="dark"] .sb-install__prompt { color: var(--crail); }
+
+.sb-gh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font: 550 0.8125rem/1 var(--font-sans);
+  color: var(--ink-1);
+  background: var(--paper-0);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 10px 16px;
+  text-decoration: none;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.sb-gh-btn:hover { border-color: var(--line-strong); box-shadow: var(--shadow-sm); }
+
 .sb-home-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -403,7 +458,7 @@ body {
 }
 .sb-drawer__head .sb-brand { padding-bottom: 0; }
 
-.sb-drawer__theme {
+.sb-theme-box {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -414,7 +469,8 @@ body {
   padding: 10px 10px 10px 12px;
   margin: 10px 0 6px;
 }
-.sb-drawer__theme-label {
+.sb-side .sb-theme-box { margin: 0 0 8px; }
+.sb-theme-box__label {
   font: 550 0.75rem/1 var(--font-sans);
   color: var(--ink-2);
 }
