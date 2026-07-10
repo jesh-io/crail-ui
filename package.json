@@ -1,6 +1,6 @@
 {
   "name": "crail-ui",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "An MCP tool UI kit in Claude's design language — primitives, chat chrome, and tool widgets that make MCP results feel native to the assistant.",
   "type": "module",
   "license": "MIT",

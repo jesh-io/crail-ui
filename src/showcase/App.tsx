@@ -457,7 +457,7 @@ export default function App() {
         <NavSections activeStory={activeStory} activeScenario={activeScenario} onGo={go} />
         <div className="sb-side__foot">
           <GitHubLink />
-          <span className="sb-version">v0.1.0</span>
+          <span className="sb-version">v0.2.0</span>
         </div>
       </nav>
 
@@ -471,7 +471,7 @@ export default function App() {
         <NavSections activeStory={activeStory} activeScenario={activeScenario} onGo={go} />
         <div className="sb-side__foot">
           <GitHubLink />
-          <span className="sb-version">v0.1.0</span>
+          <span className="sb-version">v0.2.0</span>
         </div>
       </aside>
 
