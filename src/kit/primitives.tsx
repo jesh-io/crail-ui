@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type CSSProperties } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type CSSProperties } from "react";
 import { Icon, type IconName } from "./icons";
 
 /* Helpers ------------------------------------------------------ */
@@ -254,19 +254,52 @@ export function Input({
 
 export function Textarea({
   placeholder,
+  value,
   defaultValue,
   rows = 3,
+  autoGrow,
+  onChange,
 }: {
   placeholder?: string;
+  value?: string;
   defaultValue?: string;
+  /** Initial/minimum visible rows. With autoGrow this is the floor, not a cap. */
   rows?: number;
+  /** Track content height: the field grows and shrinks with what's in it (and
+      refits on container resizes) instead of clipping at a fixed row count. */
+  autoGrow?: boolean;
+  onChange?: (v: string) => void;
 }) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  const fit = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight + el.offsetHeight - el.clientHeight}px`;
+  }, []);
+  useLayoutEffect(() => {
+    if (autoGrow) fit();
+  }, [autoGrow, value, fit]);
+  useEffect(() => {
+    if (!autoGrow || !ref.current) return;
+    // Wrapping changes with width — refit whenever the field's box resizes.
+    const ro = new ResizeObserver(fit);
+    ro.observe(ref.current);
+    return () => ro.disconnect();
+  }, [autoGrow, fit]);
   return (
     <textarea
+      ref={ref}
       className="mcp-textarea"
       placeholder={placeholder}
+      value={value}
       defaultValue={defaultValue}
       rows={rows}
+      style={autoGrow ? { overflow: "hidden", resize: "none" } : undefined}
+      onChange={(e) => {
+        onChange?.(e.target.value);
+        if (autoGrow) fit();
+      }}
     />
   );
 }

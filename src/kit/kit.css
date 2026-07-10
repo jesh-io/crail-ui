@@ -9,6 +9,15 @@
   color: var(--ink-1);
 }
 
+/* The kit owns its box model: without this, width:100% inputs (padding +
+   border) overrun their container in any consumer that doesn't ship
+   Tailwind's preflight — e.g. the single-file MCP apps. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 /* ═══ Buttons ════════════════════════════════════════════════ */
 
 .mcp-btn {

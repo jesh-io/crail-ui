@@ -68,6 +68,156 @@ ancestor (usually `<html>`).
   ElicitationCard, ProgressTracker, TaskChecklist, LogViewer, DiffView,
   Timeline, EntityCard.
 
+## Building an MCP App with Crail
+
+Crail is host-agnostic React, but it was designed for exactly one job:
+rendering MCP tool results inline in Claude (and any other
+[MCP Apps](https://github.com/modelcontextprotocol/ext-apps)-compliant host).
+This is the canonical wiring, end to end. Don't hand-roll the protocol —
+everything below comes from `@modelcontextprotocol/ext-apps`, the official
+SDK, which Claude's own docs point at.
+
+```sh
+npm install crail-ui @modelcontextprotocol/ext-apps react react-dom
+npm install -D vite @vitejs/plugin-react vite-plugin-singlefile
+```
+
+### 1 · One widget, many tools
+
+Build ONE self-contained HTML file and let every tool point at it. The host
+caches the resource; your views switch on a discriminator you put in
+`structuredContent`:
+
+```ts
+// payload.ts — the contract your server and widget share
+export type WidgetPayload =
+  | { view: "summary"; totalSpent: number; totalIncome: number }
+  | { view: "transactions"; transactions: Transaction[] }
+  | { view: "error"; message: string };
+```
+
+### 2 · The widget
+
+Use the official React hooks — `useApp` handles the transport + handshake,
+`useHostStyles` applies the host's theme, CSS variables, and fonts. The
+theme lands as `data-theme` on the document root, which is Crail's native
+theming contract — **dark mode works with zero extra code**.
+
+```tsx
+// src/main.tsx
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { useApp, useHostStyles } from "@modelcontextprotocol/ext-apps/react";
+import "crail-ui";            // tokens + component styles
+import "crail-ui/fonts.css";  // optional self-hosted fonts
+
+function Widget() {
+  const [payload, setPayload] = React.useState<WidgetPayload | null>(null);
+
+  const { app } = useApp({
+    appInfo: { name: "my-widget", version: "1.0.0" },
+    capabilities: {},
+    autoResize: true, // reports height to the host via ResizeObserver
+    onAppCreated(app) {
+      // Register handlers BEFORE the handshake (onAppCreated runs pre-connect).
+      app.ontoolinput = () => setPayload(null); // new call → loading state
+      app.ontoolresult = (result) => {
+        const p = result.structuredContent as WidgetPayload | undefined;
+        if (p?.view) setPayload(p);
+        else if (result.isError)
+          setPayload({ view: "error", message: "The tool call failed." });
+      };
+      app.onteardown = async () => ({});
+    },
+  });
+
+  useHostStyles(app, app?.getHostContext()); // theme → data-theme → Crail tokens
+
+  if (!payload) return <Spinner />;
+  switch (payload.view) {
+    case "summary":
+      return (
+        <StatRow>
+          <StatCard label="Spent" value={usd(payload.totalSpent)} />
+          <StatCard label="Income" value={usd(payload.totalIncome)} />
+        </StatRow>
+      );
+    case "transactions":
+      return <DataTable columns={…} rows={…} />;
+    case "error":
+      return <StatusBanner tone="error" title={payload.message} />;
+  }
+}
+
+ReactDOM.createRoot(document.getElementById("root")!).render(<Widget />);
+```
+
+Bundle it into a single file — the host renders it in a sandboxed iframe
+with no network access, so everything must be inlined:
+
+```ts
+// vite.config.ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { viteSingleFile } from "vite-plugin-singlefile";
+
+export default defineConfig({
+  plugins: [react(), viteSingleFile()],
+  build: { assetsInlineLimit: 100_000_000, cssCodeSplit: false },
+});
+```
+
+### 3 · The server
+
+Register the built HTML as a `ui://` resource and declare it on each tool
+via `_meta.ui.resourceUri`. Keep the text fallback — UI is an enhancement,
+not a replacement:
+
+```ts
+import {
+  registerAppTool,
+  registerAppResource,
+  RESOURCE_MIME_TYPE,
+} from "@modelcontextprotocol/ext-apps/server";
+
+const WIDGET_URI = "ui://my-server/widget.html";
+
+registerAppResource(server, "My Widget", WIDGET_URI, {}, async () => ({
+  contents: [{ uri: WIDGET_URI, mimeType: RESOURCE_MIME_TYPE, text: widgetHtml }],
+}));
+
+registerAppTool(
+  server,
+  "get_summary",
+  {
+    description: "Spending summary",
+    inputSchema: { month: z.string() },
+    _meta: { ui: { resourceUri: WIDGET_URI } },
+  },
+  async ({ month }) => {
+    const data = await fetchSummary(month);
+    return {
+      content: [{ type: "text", text: JSON.stringify(data) }], // text-only hosts
+      structuredContent: { view: "summary", ...data },          // what the widget renders
+    };
+  },
+);
+```
+
+### 4 · Checklist (the mistakes everyone makes)
+
+- **Text fallback always** — never ship a tool that only renders UI.
+- **Handlers before `connect()`** — register them in `onAppCreated`, not after.
+- **`vite-plugin-singlefile`** — separate asset files 404 inside the sandbox.
+- **Register the resource** — a `resourceUri` with no matching resource renders nothing.
+- **Theme through tokens** — never hardcode colors; `data-theme` must restyle everything.
+- **`structuredContent` is the widget's input** — treat the text block as a
+  serialization of it, not the other way around.
+
+For a full production example — 49 tools sharing one Crail widget, with a
+simulated-host test harness driving the real protocol — see
+[copilot-mcp](https://github.com/jesh-io/copilot-mcp) (`ui/` + `src/ui/`).
+
 ## Design rules the kit encodes
 
 - Warm ivory paper (`#FAF9F5`) and warm ink — never pure gray.
