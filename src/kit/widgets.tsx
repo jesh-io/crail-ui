@@ -502,15 +502,27 @@ export function ListRow({
   title,
   subtitle,
   end,
+  onClick,
+  selected,
+  muted,
+  wrap,
 }: {
   icon?: IconName;
   glyph?: ReactNode;
   title: ReactNode;
   subtitle?: ReactNode;
   end?: ReactNode;
+  onClick?: () => void;
+  selected?: boolean;
+  muted?: boolean;
+  /** Prose rows: let the title wrap to two clamped lines instead of one-line
+      ellipsis — sentence-length titles keep ~4× the text on a phone. */
+  wrap?: boolean;
 }) {
   return (
-    <div {...kit("ListRow")} className="mcp-listrow">
+    <div {...kit("ListRow")} onClick={onClick} role={onClick ? "button" : undefined}
+      className={cx("mcp-listrow", onClick && "mcp-listrow--tappable",
+        selected && "mcp-listrow--selected", muted && "mcp-listrow--muted", wrap && "mcp-listrow--wrap")}>
       <span className="mcp-listrow__glyph">{glyph ?? <Icon name={icon} size={15} />}</span>
       <span className="mcp-listrow__main">
         <div className="mcp-listrow__title">{title}</div>
