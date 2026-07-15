@@ -1205,6 +1205,251 @@ const layouthelpers: Story = {
   ],
 };
 
+const fullscreens: Story = {
+  id: "fullscreens",
+  nav: "Fullscreen apps",
+  group: "Layout",
+  title: "Fullscreen apps",
+  lede: (
+    <>
+      The layout vocabulary assembled. When a widget calls{" "}
+      <code>requestDisplayMode("fullscreen")</code> it owns the page — and
+      these are the shapes it builds: <code>PageHeader</code> on top, then{" "}
+      <code>Grid</code>, <code>Tabs</code>, <code>MasterDetail</code>, and
+      widgets below. Both demos open real takeovers; everything inside is
+      live — select, tab around, drag the divider.
+    </>
+  ),
+  sections: [
+    {
+      title: "Invoice browser",
+      note: "Browse-and-inspect: PageHeader + auto-fit stat Grid + MasterDetail. The back chevron is what requestDisplayMode(\"inline\") would wire to.",
+      render: () => (
+        <FullscreenAppDemo label="Open the invoice browser" icon="doc">
+          {(close) => <InvoiceApp onExit={close} />}
+        </FullscreenAppDemo>
+      ),
+    },
+    {
+      title: "Deploy console",
+      note: "Dashboard shape: PageHeader + Tabs switching a stat Grid + chart, a DataTable, and a LogViewer.",
+      render: () => (
+        <FullscreenAppDemo label="Open the deploy console" icon="terminal">
+          {(close) => <ConsoleApp onExit={close} />}
+        </FullscreenAppDemo>
+      ),
+    },
+  ],
+};
+
+/* ─── The assembled fullscreen apps ─── */
+
+function FullscreenAppDemo({
+  label,
+  icon,
+  children,
+}: {
+  label: string;
+  icon: "doc" | "terminal";
+  children: (close: () => void) => ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="secondary" icon="expand" onClick={() => setOpen(true)}>
+        {label}
+      </Button>
+      <Fullscreen
+        open={open}
+        onClose={() => setOpen(false)}
+        icon={icon}
+        title="Crail playground"
+        sub="displayMode: fullscreen"
+        wide
+      >
+        {children(() => setOpen(false))}
+      </Fullscreen>
+    </>
+  );
+}
+
+const FS_INVOICES = [
+  { title: "Invoice #2214", client: "Acme Corp", amount: "$1,840", status: "Paid", tone: "moss" as const, note: "Paid Jun 12 via ACH. Net-30 terms, settled 4 days early." },
+  { title: "Invoice #2215", client: "Northwind", amount: "$920", status: "Sent", tone: "amber" as const, note: "Sent Jun 18. Due Jul 18. Reminder scheduled for Jul 11." },
+  { title: "Invoice #2216", client: "Initech", amount: "$3,400", status: "Overdue", tone: "red" as const, note: "Due Jun 30, now 14 days late. Two reminders sent, no reply." },
+  { title: "Invoice #2217", client: "Globex", amount: "$610", status: "Draft", tone: "neutral" as const, note: "Line items complete, awaiting PO number from Globex." },
+  { title: "Invoice #2218", client: "Stark Industries", amount: "$7,200", status: "Sent", tone: "amber" as const, note: "Sent Jul 1. Their AP team confirmed receipt on Jul 3." },
+  { title: "Invoice #2219", client: "Wayne Enterprises", amount: "$2,150", status: "Paid", tone: "moss" as const, note: "Paid Jul 8 by card. Processing fee absorbed per contract." },
+];
+
+function InvoiceApp({ onExit }: { onExit: () => void }) {
+  const [sel, setSel] = useState<number | null>(1);
+  const item = sel === null ? undefined : FS_INVOICES[sel];
+  return (
+    <Stack gap={18}>
+      <PageHeader
+        title="Invoices"
+        sub="Q2 2026 · 6 open records"
+        icon="doc"
+        onBack={onExit}
+        actions={
+          <>
+            <Button variant="ghost" size="sm" icon="filter">
+              Filter
+            </Button>
+            <Button variant="primary" size="sm" icon="plus">
+              New invoice
+            </Button>
+          </>
+        }
+      />
+      <Grid min={150}>
+        <StatCard label="Outstanding" value="$12.3k" delta="18%" direction="down" />
+        <StatCard label="Overdue" value="$3.4k" delta="1 invoice" direction="flat" />
+        <StatCard label="Paid this quarter" value="$41.8k" delta="12%" direction="up" />
+        <StatCard label="Avg days to pay" value="11" delta="3 days" direction="up" />
+      </Grid>
+      <MasterDetail
+        height={430}
+        initial={42}
+        master={
+          <ListManager flat>
+            {FS_INVOICES.map((inv, i) => (
+              <ListRow
+                key={inv.title}
+                icon="doc"
+                title={inv.title}
+                subtitle={`${inv.client} · ${inv.amount}`}
+                selected={sel === i}
+                onClick={() => setSel(i)}
+                end={<Badge tone={inv.tone}>{inv.status}</Badge>}
+              />
+            ))}
+          </ListManager>
+        }
+        detail={
+          item ? (
+            <Stack gap={14} style={{ padding: 16 }}>
+              <Cluster justify="between">
+                <Badge tone={item.tone} dot>
+                  {item.status}
+                </Badge>
+                <Cluster>
+                  <Button variant="secondary" size="sm" icon="send">
+                    Send reminder
+                  </Button>
+                  <Button variant="primary" size="sm">
+                    Mark paid
+                  </Button>
+                </Cluster>
+              </Cluster>
+              <KeyValue
+                rows={[
+                  ["Client", item.client],
+                  ["Amount", item.amount],
+                  ["Terms", "Net-30"],
+                  ["Owner", "you"],
+                ]}
+              />
+              <StatusBanner
+                tone={item.status === "Overdue" ? "warning" : "info"}
+                title={item.status === "Overdue" ? "Needs a nudge" : "Latest activity"}
+              >
+                {item.note}
+              </StatusBanner>
+            </Stack>
+          ) : null
+        }
+        onClose={() => setSel(null)}
+        detailTitle={item?.title}
+        detailSub={item?.client}
+        placeholder="Select an invoice to inspect it"
+      />
+    </Stack>
+  );
+}
+
+function ConsoleApp({ onExit }: { onExit: () => void }) {
+  const [tab, setTab] = useState(0);
+  return (
+    <Stack gap={18}>
+      <PageHeader
+        title="Deploy console"
+        sub="crail-mcp · production"
+        icon="terminal"
+        onBack={onExit}
+        actions={
+          <>
+            <Badge tone="moss" dot>
+              healthy
+            </Badge>
+            <Button variant="secondary" size="sm" icon="refresh">
+              Redeploy
+            </Button>
+          </>
+        }
+      />
+      <Tabs
+        tabs={[{ label: "Overview" }, { label: "Requests", count: 4 }, { label: "Logs" }]}
+        active={tab}
+        onChange={setTab}
+      />
+      {tab === 0 && (
+        <Stack gap={18}>
+          <Grid min={150}>
+            <StatCard label="Requests / day" value="1,204" delta="22%" direction="up" />
+            <StatCard label="p95 latency" value="184ms" delta="12ms" direction="down" />
+            <StatCard label="Error rate" value="0.2%" delta="flat" direction="flat" />
+            <StatCard label="Widgets rendered" value="312" delta="41%" direction="up" />
+          </Grid>
+          <BarChart
+            title="render_ui calls"
+            subtitle="last 7 days"
+            data={[
+              { label: "Tue", value: 122 },
+              { label: "Wed", value: 148 },
+              { label: "Thu", value: 210 },
+              { label: "Fri", value: 186 },
+              { label: "Sat", value: 94 },
+              { label: "Sun", value: 71 },
+              { label: "Mon", value: 173 },
+            ]}
+            highlight={2}
+          />
+        </Stack>
+      )}
+      {tab === 1 && (
+        <DataTable
+          columns={[
+            { header: "Tool" },
+            { header: "Host" },
+            { header: "Status" },
+            { header: "Latency", numeric: true, sorted: "desc" },
+          ]}
+          rows={[
+            ["render_ui", "claude.ai", <Badge key="a" tone="moss">200</Badge>, "212ms"],
+            ["list_components", "claude.ai", <Badge key="b" tone="moss">200</Badge>, "148ms"],
+            ["render_ui", "Claude Desktop", <Badge key="c" tone="moss">200</Badge>, "131ms"],
+            ["render_ui", "claude.ai", <Badge key="d" tone="red">422</Badge>, "89ms"],
+          ]}
+          footer={{ summary: "4 requests in the last hour" }}
+        />
+      )}
+      {tab === 2 && (
+        <LogViewer
+          title="worker tail"
+          lines={[
+            { time: "14:02:11", text: "POST /mcp tools/call render_ui — compiled ok (StatRow, BarChart)", level: "ok" },
+            { time: "14:02:14", text: "playground feedback: [event] user confirmed budget", level: "ok" },
+            { time: "14:03:02", text: "POST /mcp tools/call render_ui — unknown component <Sparkles>, suggested Sparkline", level: "warn" },
+            { time: "14:03:09", text: "POST /mcp tools/call render_ui — compiled ok after retry", level: "ok" },
+          ]}
+        />
+      )}
+    </Stack>
+  );
+}
+
 /* Live demos need their own state, so they're tiny components. */
 
 const MD_ITEMS = [
@@ -1952,6 +2197,7 @@ export const STORIES: Story[] = [
   splitview,
   masterdetail,
   layouthelpers,
+  fullscreens,
   takeovers,
   stats,
   tables,
