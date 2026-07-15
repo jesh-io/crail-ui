@@ -1551,10 +1551,15 @@ html {
   border-radius: 99px;
   background: var(--line-strong);
   box-shadow: 0 0 0 2px var(--paper-0);
-  transition: background var(--dur-fast);
+  opacity: 0;
+  transition: background var(--dur-fast), opacity var(--dur-fast);
 }
 .mcp-md__handle:hover i,
-.mcp-md.is-dragging .mcp-md__handle i { background: var(--crail); }
+.mcp-md__handle:focus-visible i,
+.mcp-md.is-dragging .mcp-md__handle i {
+  opacity: 1;
+  background: var(--crail);
+}
 .mcp-md__handle:focus-visible {
   outline: 2px solid var(--crail);
   outline-offset: -2px;
@@ -1640,10 +1645,15 @@ html {
   height: 26px;
   border-radius: 99px;
   background: var(--line-strong);
-  transition: background var(--dur-fast);
+  opacity: 0;
+  transition: background var(--dur-fast), opacity var(--dur-fast);
 }
 .mcp-md__panel-grip:hover i,
-.mcp-md__panel.is-dragging .mcp-md__panel-grip i { background: var(--crail); }
+.mcp-md__panel-grip:focus-visible i,
+.mcp-md__panel.is-dragging .mcp-md__panel-grip i {
+  opacity: 1;
+  background: var(--crail);
+}
 .mcp-md__panel-grip:focus-visible {
   outline: 2px solid var(--crail);
   outline-offset: -4px;
