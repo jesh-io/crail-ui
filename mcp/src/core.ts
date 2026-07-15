@@ -81,13 +81,14 @@ CONTRACT for \`source\` (JSX, no imports — everything below is already in scop
 - In scope: every component listed below, React, useState/useEffect/useMemo/useRef/useCallback/useReducer, \`data\` (your JSON payload from the \`data\` argument — pass real data there, don't inline large literals), \`report(event, detail?)\`, \`useDisplayMode()\`, \`requestDisplayMode("fullscreen"|"inline")\`.
 - Call report("what happened", detail) in every event handler — user interactions flow back to you silently so you can respond to what they clicked, chose, or typed.
 - Widgets can escalate themselves: an expand affordance calling requestDisplayMode("fullscreen"), with useDisplayMode() to render a compact inline card vs. a full-page layout (wrap the fullscreen branch in a min-height:100dvh container). Build micro-experiences inline; build full apps in fullscreen.
-- Never hardcode colors or fonts — the kit is themed by the host. Layout styles (flex, grid, gap, padding) via style props are fine.
+- Never hardcode colors or fonts — the kit is themed by the host. For spacing/arrangement prefer <Stack gap>, <Grid cols|min>, <Cluster> over hand-written style props; fall back to style only for what they can't express.
 
 AVAILABLE COMPONENTS (call list_components once for full prop signatures; get_component for a quick single lookup):
 ${componentIndex(catalog)}
 
 RECIPES:
-- Dashboard: <div style={{display:"grid",gap:12}}><StatRow>…</StatRow><BarChart data={data.byMonth} /><DataTable columns={…} rows={data.rows} /></div>
+- Dashboard: <Stack><StatRow>…</StatRow><BarChart data={data.byMonth} /><DataTable columns={…} rows={data.rows} /></Stack>
+- Fullscreen app shell: <Stack gap={16} style={{minHeight:"100dvh"}}><PageHeader title="…" sub="…" actions={…} onBack={() => requestDisplayMode("inline")} />…content…</Stack>
 - Confirm flow: App with useState; Button onClick={() => { setDone(true); report("user confirmed", {id: data.id}); }} → swap in a StatusBanner tone="success".
 - Drill-in: inline shows headline stats + an expand IconButton → fullscreen shows the browsing surface.
 - Browse-and-inspect (fullscreen): <MasterDetail master={<ListManager>…rows with onClick…</ListManager>} detail={sel ? <KeyValue rows={…} /> : null} onClose={() => setSel(null)} height="100dvh" /> — selection-aware list+detail with a resizable divider (variant="overlay" for an inspector panel over the list; side="right" to flip). Narrow widths handle themselves: split becomes stacked pages with a back header, overlay becomes a bottom card.

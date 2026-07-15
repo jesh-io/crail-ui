@@ -2,13 +2,14 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
   type RefObject,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import { Icon, type IconName } from "./icons";
-import { IconButton } from "./primitives";
+import { EmptyState, IconButton } from "./primitives";
 
 const kit = (name: string) => ({ "data-kit": name });
 
@@ -234,6 +235,129 @@ export function SplitView({
   );
 }
 
+/* ═══ Spacing primitives — the layout vocabulary ═════════════════ */
+
+export function Stack({
+  gap = 12,
+  align,
+  children,
+  style,
+}: {
+  /** Gap between children, px. */
+  gap?: number;
+  align?: "start" | "center" | "end" | "stretch";
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      {...kit("Stack")}
+      style={{ display: "flex", flexDirection: "column", gap, alignItems: align, ...style }}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function Cluster({
+  gap = 8,
+  align = "center",
+  justify,
+  children,
+  style,
+}: {
+  /** Gap between children, px. */
+  gap?: number;
+  align?: "start" | "center" | "end" | "baseline";
+  justify?: "start" | "center" | "end" | "between";
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      {...kit("Cluster")}
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        gap,
+        alignItems: align,
+        justifyContent: justify === "between" ? "space-between" : justify,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+export function Grid({
+  cols,
+  min = 180,
+  gap = 12,
+  children,
+  style,
+}: {
+  /** Fixed column count; omit for responsive auto-fit. */
+  cols?: number;
+  /** Auto-fit mode: minimum column width, px — columns wrap as the container narrows. */
+  min?: number;
+  gap?: number;
+  children: ReactNode;
+  style?: CSSProperties;
+}) {
+  return (
+    <div
+      {...kit("Grid")}
+      style={{
+        display: "grid",
+        gap,
+        gridTemplateColumns: cols
+          ? `repeat(${cols}, minmax(0, 1fr))`
+          : `repeat(auto-fit, minmax(min(${min}px, 100%), 1fr))`,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ═══ PageHeader — a fullscreen app's top bar ════════════════════ */
+
+export function PageHeader({
+  title,
+  sub,
+  icon,
+  onBack,
+  actions,
+  sticky = false,
+}: {
+  title: ReactNode;
+  sub?: ReactNode;
+  icon?: IconName;
+  /** Renders a back chevron before the title. */
+  onBack?: () => void;
+  actions?: ReactNode;
+  /** Pin to the top of the scroll container. */
+  sticky?: boolean;
+}) {
+  return (
+    <header {...kit("PageHeader")} className={cx("mcp-pagehead", sticky && "is-sticky")}>
+      {onBack && <IconButton icon="chevronLeft" label="Back" onClick={onBack} />}
+      {icon && (
+        <span className="mcp-pagehead__glyph">
+          <Icon name={icon} size={15} />
+        </span>
+      )}
+      <span className="mcp-pagehead__id">
+        <div className="mcp-pagehead__title">{title}</div>
+        {sub && <div className="mcp-pagehead__sub">{sub}</div>}
+      </span>
+      {actions && <span className="mcp-pagehead__actions">{actions}</span>}
+    </header>
+  );
+}
+
 /* ═══ MasterDetail — selection-aware list + detail layout ════════ */
 
 function useContainerWidth(ref: RefObject<HTMLDivElement>) {
@@ -260,6 +384,7 @@ export function MasterDetail({
   initial = 38,
   min = 24,
   max = 62,
+  panelInitial = 46,
   height = 420,
   breakpoint = 560,
 }: {
@@ -281,6 +406,8 @@ export function MasterDetail({
   initial?: number;
   min?: number;
   max?: number;
+  /** Overlay panel starting width, % of the container. */
+  panelInitial?: number;
   /** Use "100%" or "100dvh" inside fullscreen shells. */
   height?: number | string;
   /** Container width (px) below which the narrow presentation kicks in:
@@ -293,7 +420,7 @@ export function MasterDetail({
   const open = detail !== null && detail !== undefined;
 
   const [pct, setPct] = useState(initial);
-  const [panelPct, setPanelPct] = useState(46);
+  const [panelPct, setPanelPct] = useState(panelInitial);
   const [dragging, setDragging] = useState(false);
 
   // Escape dismisses any over-the-list presentation (never the split pane).
@@ -409,11 +536,12 @@ export function MasterDetail({
     <div className="mcp-md__pane">
       {open ? (
         detail
-      ) : (
-        <div className="mcp-md__empty">
-          <Icon name="box" size={18} />
-          <span>{placeholder}</span>
+      ) : typeof placeholder === "string" ? (
+        <div className="mcp-md__center">
+          <EmptyState title={placeholder} />
         </div>
+      ) : (
+        placeholder
       )}
     </div>
   );

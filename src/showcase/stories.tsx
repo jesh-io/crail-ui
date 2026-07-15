@@ -7,6 +7,10 @@ import {
   CollapsibleCard,
   SplitView,
   MasterDetail,
+  Stack,
+  Cluster,
+  Grid,
+  PageHeader,
   Sheet,
   Fullscreen,
   Expandable,
@@ -1126,6 +1130,81 @@ const masterdetail: Story = {
   ],
 };
 
+const layouthelpers: Story = {
+  id: "layouthelpers",
+  nav: "Layout helpers",
+  group: "Layout",
+  title: "Layout helpers",
+  lede: (
+    <>
+      The spacing vocabulary: <code>Stack</code> for vertical rhythm,{" "}
+      <code>Cluster</code> for wrapping rows, <code>Grid</code> for columns
+      (fixed count, or auto-fit that wraps as the container narrows), and{" "}
+      <code>PageHeader</code> for the top bar of a fullscreen view. Composed
+      UIs stop hand-writing flex and grid styles.
+    </>
+  ),
+  sections: [
+    {
+      title: "Page header",
+      note: "Back chevron, glyph, title/sub, trailing actions — the anatomy of a fullscreen app's first row.",
+      render: () => (
+        <PageHeader
+          title="Invoices"
+          sub="Q2 · 214 records"
+          icon="doc"
+          onBack={() => {}}
+          actions={
+            <>
+              <Button variant="ghost" size="sm" icon="search">
+                Search
+              </Button>
+              <Button variant="secondary" size="sm" icon="plus">
+                New
+              </Button>
+            </>
+          }
+        />
+      ),
+    },
+    {
+      title: "Grid, auto-fit",
+      note: "No cols given — columns wrap to fit min={150}. Narrow the window and watch it reflow.",
+      render: () => (
+        <Grid min={150}>
+          <StatCard label="Revenue" value="$12.4k" delta="8%" direction="up" />
+          <StatCard label="Invoices" value="214" />
+          <StatCard label="Overdue" value="3" delta="2" direction="down" />
+          <StatCard label="Avg days" value="11" />
+        </Grid>
+      ),
+    },
+    {
+      title: "Stack + Cluster",
+      note: "Stack owns vertical rhythm; Cluster wraps chips, buttons, and meta rows.",
+      render: () => (
+        <Stack gap={14} style={{ maxWidth: 520 }}>
+          <Cluster justify="between">
+            <span style={{ font: "600 0.95rem/1.3 var(--font-sans)" }}>Filters</span>
+            <Button variant="ghost" size="sm">
+              Clear all
+            </Button>
+          </Cluster>
+          <Cluster>
+            <Chip active>Unpaid</Chip>
+            <Chip>Overdue</Chip>
+            <Chip>Drafts</Chip>
+            <Chip>This quarter</Chip>
+          </Cluster>
+          <StatusBanner tone="info" title="4 filters available">
+            Cluster wraps to as many lines as it needs — no media queries.
+          </StatusBanner>
+        </Stack>
+      ),
+    },
+  ],
+};
+
 /* Live demos need their own state, so they're tiny components. */
 
 const MD_ITEMS = [
@@ -1872,6 +1951,7 @@ export const STORIES: Story[] = [
   collapsible,
   splitview,
   masterdetail,
+  layouthelpers,
   takeovers,
   stats,
   tables,
