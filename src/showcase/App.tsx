@@ -1,5 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
-import { Icon, Segmented, type IconName } from "../kit";
+import {
+  Icon,
+  IconButton,
+  UserMessage,
+  AssistantMessage,
+  ToolCallBlock,
+  CodeBlock,
+  StatRow,
+  StatCard,
+  BarChart,
+  StatusBanner,
+  Button,
+  type IconName,
+} from "../kit";
 import { STORIES, type Story } from "./stories";
 import { SCENARIOS, ScenarioStage, type Scenario } from "./scenarios";
 
@@ -60,7 +73,7 @@ const GROUP_ICONS: Record<string, IconName> = {
   "Tool widgets": "wrench",
 };
 
-function ThemePicker({
+function ThemeToggle({
   theme,
   onChoose,
 }: {
@@ -68,13 +81,11 @@ function ThemePicker({
   onChoose: (t: "light" | "dark") => void;
 }) {
   return (
-    <Segmented
-      options={[
-        { label: "Light", icon: "sun" },
-        { label: "Dark", icon: "moon" },
-      ]}
-      active={theme === "light" ? 0 : 1}
-      onChange={(i) => onChoose(i === 0 ? "light" : "dark")}
+    <IconButton
+      icon={theme === "light" ? "moon" : "sun"}
+      label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+      size="sm"
+      onClick={() => onChoose(theme === "light" ? "dark" : "light")}
     />
   );
 }
@@ -135,11 +146,38 @@ function Brand({ onClick }: { onClick: () => void }) {
       </span>
       <span>
         <div className="sb-brand__name">Crail</div>
-        <div className="sb-brand__sub">MCP UI kit · showcase</div>
+        <div className="sb-brand__sub">Live UI for Claude</div>
       </span>
     </button>
   );
 }
+
+/* Sidebar links that point INTO the landing page — the visitor's journey
+   (what is it → see it work → wire it up), not the kit's internal anatomy. */
+function goSection(go: (r: string) => void, id: string) {
+  const onHome = (window.location.hash.slice(1) || "home") === "home";
+  if (!onHome) go("home");
+  // Deferred past the click (focus scroll wins otherwise) and instant:
+  // smooth scrolls get cancelled by the sticky-sidebar layout.
+  setTimeout(
+    () => document.getElementById(id)?.scrollIntoView({ block: "start" }),
+    onHome ? 60 : 200,
+  );
+}
+
+const START_LINKS: Array<{ id: string; label: string; icon: IconName }> = [
+  { id: "how-it-works", label: "How it works", icon: "play" },
+  { id: "tools", label: "The tools", icon: "wrench" },
+  { id: "connect", label: "Connect it", icon: "link" },
+];
+
+const GROUP_LABELS: Record<string, string> = {
+  Foundations: "Foundations",
+  Primitives: "Primitives",
+  Chat: "Chat chrome",
+  Layout: "Layout",
+  "Tool widgets": "Widgets",
+};
 
 function NavSections({
   activeStory,
@@ -157,11 +195,33 @@ function NavSections({
     return map;
   }, []);
 
+  const onHome = !activeStory && !activeScenario;
+
   return (
     <>
+      {/* The visitor's path: what is it → see it work → wire it up. */}
+      <div>
+        <div className="sb-nav-group">Start</div>
+        <button
+          className={`sb-nav-item ${onHome ? "sb-nav-item--active" : ""}`}
+          onClick={() => onGo("home")}
+        >
+          <Icon name="home" size={13} />
+          Overview
+        </button>
+        {START_LINKS.map((l) => (
+          <button key={l.id} className="sb-nav-item" onClick={() => goSection(onGo, l.id)}>
+            <Icon name={l.icon} size={13} />
+            {l.label}
+          </button>
+        ))}
+      </div>
+
+      {/* The library: everything Claude composes with. */}
+      <div className="sb-nav-banner">Component library</div>
       {[...grouped.entries()].map(([group, stories]) => (
         <div key={group}>
-          <div className="sb-nav-group">{group}</div>
+          <div className="sb-nav-group">{GROUP_LABELS[group] ?? group}</div>
           {stories.map((s) => (
             <button
               key={s.id}
@@ -177,7 +237,7 @@ function NavSections({
         </div>
       ))}
       <div>
-        <div className="sb-nav-group">Scenarios</div>
+        <div className="sb-nav-group">Examples</div>
         {SCENARIOS.map((sc) => (
           <button
             key={sc.id}
@@ -259,7 +319,88 @@ function ScenarioPage({ scenario }: { scenario: Scenario }) {
   );
 }
 
+/* ── The live demo the landing revolves around ────────────────── */
+
+const DEMO_SOURCE = `function App() {
+  const [ok, setOk] = useState(false);
+  return <>
+    <StatRow>
+      <StatCard label="Total spent" value="$4,286"
+                delta="8% vs May" direction="down" />
+      <StatCard label="Saved" value="$5,414"
+                delta="+$610" direction="up" />
+    </StatRow>
+    <BarChart title="June by category"
+              data={data.categories} />
+    {ok
+      ? <StatusBanner tone="success" title="Budget confirmed" />
+      : <Button variant="primary"
+          onClick={() => { setOk(true); report("user confirmed budget"); }}>
+          Confirm budget
+        </Button>}
+  </>;
+}`;
+
+const DEMO_DATA = [
+  { label: "Rent", value: 2200 },
+  { label: "Food", value: 840 },
+  { label: "Transport", value: 320 },
+  { label: "Fun", value: 510 },
+  { label: "Other", value: 416 },
+];
+
+function DemoWidget({ onEvent }: { onEvent: () => void }) {
+  const [ok, setOk] = useState(false);
+  return (
+    <div style={{ display: "grid", gap: 12 }}>
+      <StatRow>
+        <StatCard label="Total spent" value="$4,286" delta="8% vs May" direction="down" />
+        <StatCard label="Saved" value="$5,414" delta="+$610" direction="up" />
+      </StatRow>
+      <BarChart title="June by category" data={DEMO_DATA} />
+      {ok ? (
+        <StatusBanner tone="success" title="Budget confirmed">
+          The widget just called <code>report("user confirmed budget")</code> — Claude hears
+          about it without a single token of chat.
+        </StatusBanner>
+      ) : (
+        <Button
+          variant="primary"
+          onClick={() => {
+            setOk(true);
+            onEvent();
+          }}
+        >
+          Confirm budget
+        </Button>
+      )}
+    </div>
+  );
+}
+
+function EndpointLine() {
+  const [copied, setCopied] = useState(false);
+  const url = "https://crail.jesh.dev/mcp";
+  return (
+    <button
+      className="sb-install"
+      title="Copy the MCP endpoint"
+      onClick={() => {
+        navigator.clipboard.writeText(url).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1600);
+        });
+      }}
+    >
+      <Icon name="spark" size={13} />
+      <code>{url}</code>
+      <Icon name={copied ? "check" : "copy"} size={13} />
+    </button>
+  );
+}
+
 function HomePage({ go }: { go: (r: string) => void }) {
+  const [eventFired, setEventFired] = useState(false);
   const counts = useMemo(() => {
     const byGroup: Record<string, number> = {};
     for (const s of STORIES) byGroup[s.group] = (byGroup[s.group] ?? 0) + 1;
@@ -268,19 +409,20 @@ function HomePage({ go }: { go: (r: string) => void }) {
   return (
     <div>
       <div className="sb-hero">
-        <span className="sb-eyebrow">Crail · MCP UI kit</span>
+        <span className="sb-eyebrow">Crail · generative UI for Claude, over MCP</span>
         <h1 className="sb-hero__title">
-          Tools that feel <em>native</em> to the assistant they live in.
+          Claude composes <em>live UI</em>, right in the chat.
         </h1>
         <p className="sb-lede" style={{ maxWidth: 660 }}>
-          Most MCP tools bolt a foreign interface onto a conversation. Crail
-          takes the opposite view: match the host's design language — warm
-          paper, one quiet grotesque, one terracotta accent — so a tool result reads
-          as part of the reply, not an ad inside it. Primitives, chat chrome,
-          and tool widgets, themed by CSS tokens, shown here both raw and inside
-          full rendered conversations.
+          Plug one MCP endpoint into Claude and any tool result can become a
+          real, interactive widget — composed on the fly from this kit, in
+          Claude's own design language. No build step, no imports, no iframe
+          hosting of your own: Claude writes a few lines of JSX, the Crail
+          playground renders them inline, and user interactions flow silently
+          back to the model.
         </p>
         <div className="sb-hero__actions">
+          <EndpointLine />
           <InstallLine />
           <a className="sb-gh-btn" href={GITHUB_URL} target="_blank" rel="noreferrer">
             <GitHubMark />
@@ -289,7 +431,160 @@ function HomePage({ go }: { go: (r: string) => void }) {
         </div>
       </div>
 
-      <div className="sb-home-cards">
+      <section className="sb-section" id="how-it-works">
+        <div className="sb-section__head">
+          <span className="sb-section__title">How it works</span>
+          <span className="sb-section__note">
+            This demo is live — the widget on the right is running, click it.
+          </span>
+        </div>
+
+        <div className="sb-steps">
+          <div className="sb-step">
+            <span className="sb-step__n">1</span>
+            <span className="sb-step__title">Connect</span>
+            <span className="sb-step__desc">
+              Add the endpoint as a custom connector in Claude — nothing to
+              install, nothing to host.
+            </span>
+          </div>
+          <div className="sb-step">
+            <span className="sb-step__n">2</span>
+            <span className="sb-step__title">Discover</span>
+            <span className="sb-step__desc">
+              Claude calls <code>list_components</code> and{" "}
+              <code>get_component</code> for real prop signatures — ~70
+              components, generated from the kit's types.
+            </span>
+          </div>
+          <div className="sb-step">
+            <span className="sb-step__n">3</span>
+            <span className="sb-step__title">Compose</span>
+            <span className="sb-step__desc">
+              Claude sends plain JSX to <code>render_ui</code>. Every component
+              is already in scope; data rides along as JSON.
+            </span>
+          </div>
+          <div className="sb-step">
+            <span className="sb-step__n">4</span>
+            <span className="sb-step__title">Interact</span>
+            <span className="sb-step__desc">
+              The playground renders it inline. Clicks, state, and console
+              output report back to Claude — it iterates on what it hears.
+            </span>
+          </div>
+        </div>
+
+        <UserMessage>How did June spending look? Give me something I can act on.</UserMessage>
+        <div style={{ height: 14 }} />
+        <div className="sb-duo">
+          <div>
+            <div className="sb-section__note" style={{ display: "block", marginBottom: 8 }}>
+              The JSX Claude writes — no imports, hooks allowed, <code>data</code> in scope:
+            </div>
+            <CodeBlock language="jsx">{DEMO_SOURCE}</CodeBlock>
+          </div>
+          <div>
+            <div className="sb-section__note" style={{ display: "block", marginBottom: 8 }}>
+              What renders in the conversation:
+            </div>
+            <AssistantMessage>
+              <ToolCallBlock
+                tool="render_ui"
+                server="crail"
+                status="success"
+                duration="0.2s"
+                params={{ title: "June budget", data: "{ categories: […] }" }}
+              >
+                <DemoWidget onEvent={() => setEventFired(true)} />
+              </ToolCallBlock>
+            </AssistantMessage>
+            <div style={{ height: 10 }} />
+            <div className={`sb-event ${eventFired ? "" : "sb-event--idle"}`}>
+              <Icon name={eventFired ? "check" : "clock"} size={13} />
+              {eventFired
+                ? '[event] user confirmed budget → delivered to Claude via updateModelContext'
+                : "waiting for you to click the widget…"}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="sb-section" id="tools">
+        <div className="sb-section__head">
+          <span className="sb-section__title">Three tools, one playground</span>
+          <span className="sb-section__note">
+            The whole server surface — stateless, no auth, plug in and go.
+          </span>
+        </div>
+        <div className="sb-home-cards" style={{ marginTop: 0 }}>
+          <div className="sb-home-card" style={{ cursor: "default" }}>
+            <span className="sb-home-card__icon">
+              <Icon name="wrench" size={16} />
+            </span>
+            <span className="sb-home-card__title">render_ui</span>
+            <span className="sb-home-card__desc">
+              JSX in, live widget out. Compile errors and unknown components
+              come back as fixable tool errors with did-you-mean suggestions.
+            </span>
+          </div>
+          <div className="sb-home-card" style={{ cursor: "default" }}>
+            <span className="sb-home-card__icon">
+              <Icon name="box" size={16} />
+            </span>
+            <span className="sb-home-card__title">list_components</span>
+            <span className="sb-home-card__desc">
+              The catalog, grouped — primitives, widgets, layout, chat chrome,
+              icons — so Claude knows what it can build with.
+            </span>
+          </div>
+          <div className="sb-home-card" style={{ cursor: "default" }}>
+            <span className="sb-home-card__icon">
+              <Icon name="eye" size={16} />
+            </span>
+            <span className="sb-home-card__title">get_component</span>
+            <span className="sb-home-card__desc">
+              Full TypeScript prop signatures on demand, generated from the
+              kit's own <code>.d.ts</code> — docs that can't drift.
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <section className="sb-section" id="connect">
+        <div className="sb-section__head">
+          <span className="sb-section__title">Connect it</span>
+          <span className="sb-section__note">claude.ai, Claude Desktop, or any MCP Apps host.</span>
+        </div>
+        <div className="sb-duo">
+          <div>
+            <div className="sb-section__note" style={{ display: "block", marginBottom: 8 }}>
+              claude.ai — Settings → Connectors → Add custom connector:
+            </div>
+            <CodeBlock language="text">{`https://crail.jesh.dev/mcp`}</CodeBlock>
+          </div>
+          <div>
+            <div className="sb-section__note" style={{ display: "block", marginBottom: 8 }}>
+              Claude Desktop — <code>claude_desktop_config.json</code>:
+            </div>
+            <CodeBlock language="json">{`{
+  "mcpServers": {
+    "crail": { "command": "npx", "args": ["crail-mcp"] }
+  }
+}`}</CodeBlock>
+          </div>
+        </div>
+      </section>
+
+      <section className="sb-section">
+        <div className="sb-section__head">
+          <span className="sb-section__title">The kit underneath</span>
+          <span className="sb-section__note">
+            Everything Claude composes with, browsable — raw and in full
+            rendered conversations.
+          </span>
+        </div>
+        <div className="sb-home-cards" style={{ marginTop: 0 }}>
         <button className="sb-home-card" onClick={() => go("story/colors")}>
           <span className="sb-home-card__icon">
             <Icon name="box" size={16} />
@@ -344,7 +639,8 @@ function HomePage({ go }: { go: (r: string) => void }) {
           </span>
           <span className="sb-home-card__count">{counts["Tool widgets"]} pages</span>
         </button>
-      </div>
+        </div>
+      </section>
 
       <section className="sb-section">
         <div className="sb-section__head">
@@ -427,6 +723,9 @@ export default function App() {
           <Icon name="menu" size={18} />
         </button>
         <Brand onClick={() => go("home")} />
+        <span style={{ marginLeft: "auto" }}>
+          <ThemeToggle theme={theme} onChoose={chooseTheme} />
+        </span>
       </header>
 
       {/* Mobile drawer */}
@@ -450,10 +749,6 @@ export default function App() {
             <Icon name="x" size={17} />
           </button>
         </div>
-        <div className="sb-theme-box">
-          <span className="sb-theme-box__label">Appearance</span>
-          <ThemePicker theme={theme} onChoose={chooseTheme} />
-        </div>
         <NavSections activeStory={activeStory} activeScenario={activeScenario} onGo={go} />
         <div className="sb-side__foot">
           <GitHubLink />
@@ -463,10 +758,9 @@ export default function App() {
 
       {/* Desktop sidebar */}
       <aside className="sb-side">
-        <Brand onClick={() => go("home")} />
-        <div className="sb-theme-box">
-          <span className="sb-theme-box__label">Appearance</span>
-          <ThemePicker theme={theme} onChoose={chooseTheme} />
+        <div className="sb-brandrow">
+          <Brand onClick={() => go("home")} />
+          <ThemeToggle theme={theme} onChoose={chooseTheme} />
         </div>
         <NavSections activeStory={activeStory} activeScenario={activeScenario} onGo={go} />
         <div className="sb-side__foot">
