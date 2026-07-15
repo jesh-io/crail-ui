@@ -5,3 +5,9 @@ site/
 *.tgz
 .DS_Store
 .claude/
+mcp/node_modules
+mcp/dist
+mcp/dist-app
+mcp/dist-harness
+mcp/catalog.json
+public/

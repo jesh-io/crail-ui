@@ -93,23 +93,27 @@
   --scrim: rgba(38, 36, 33, 0.4);
 }
 
-/* ── Dark: warm charcoal, same terracotta ───────────────────── */
+/* ── Dark: neutral charcoal, same terracotta ────────────────── */
+/* Anchored to claude.ai's fullscreen surface rgb(44,44,44). The host's
+   boxes are near-neutral; a warm dark card on that ground reads as a
+   seam. Elevation = lightness: cards float above the field, wells step
+   just below it. Warmth survives only in --paper-tint. */
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --paper-0: #282826;
-  --paper-1: #1e1e1c;
-  --paper-2: #171615;
-  --paper-3: #32322f;
-  --paper-tint: #302d28;
+  --paper-0: #373737;
+  --paper-1: #2c2c2c;
+  --paper-2: #262626;
+  --paper-3: #424242;
+  --paper-tint: #3a352e;
 
-  --ink-1: #f0efea;
-  --ink-2: #b6b3aa;
-  --ink-3: #85827a;
+  --ink-1: #f2f1ed;
+  --ink-2: #bab7ae;
+  --ink-3: #8d8a82;
   --ink-inverse: #262421;
 
-  --line: rgba(255, 255, 255, 0.12);
-  --line-strong: rgba(255, 255, 255, 0.24);
+  --line: rgba(255, 255, 255, 0.14);
+  --line-strong: rgba(255, 255, 255, 0.27);
 
   --crail: #db8465;
   --crail-strong: #e5977b;
@@ -130,6 +134,6 @@
   --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.2);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.48), 0 2px 6px rgba(0, 0, 0, 0.25);
 
-  --code-bg: #171615;
+  --code-bg: #262626;
   --scrim: rgba(0, 0, 0, 0.55);
 }
