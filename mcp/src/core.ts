@@ -89,7 +89,8 @@ ${componentIndex(catalog)}
 RECIPES:
 - Dashboard: <div style={{display:"grid",gap:12}}><StatRow>…</StatRow><BarChart data={data.byMonth} /><DataTable columns={…} rows={data.rows} /></div>
 - Confirm flow: App with useState; Button onClick={() => { setDone(true); report("user confirmed", {id: data.id}); }} → swap in a StatusBanner tone="success".
-- Drill-in: inline shows headline stats + an expand IconButton → fullscreen shows Tabs with the full DataTable.
+- Drill-in: inline shows headline stats + an expand IconButton → fullscreen shows the browsing surface.
+- Browse-and-inspect (fullscreen): <MasterDetail master={<ListManager>…rows with onClick…</ListManager>} detail={sel ? <KeyValue rows={…} /> : null} onClose={() => setSel(null)} height="100dvh" /> — selection-aware list+detail with a resizable divider (variant="overlay" for an inspector panel over the list; side="right" to flip). Narrow widths handle themselves: split becomes stacked pages with a back header, overlay becomes a bottom card.
 
 If this tool returns an error, it is always fixable from the message (parse position, unknown-component suggestions) — correct the source and call again.`;
 }

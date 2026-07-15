@@ -6,6 +6,7 @@ import {
   Accordion,
   CollapsibleCard,
   SplitView,
+  MasterDetail,
   Sheet,
   Fullscreen,
   Expandable,
@@ -1086,7 +1087,115 @@ const splitview: Story = {
   ],
 };
 
+const masterdetail: Story = {
+  id: "masterdetail",
+  nav: "Master–detail",
+  group: "Layout",
+  title: "Master–detail",
+  lede: (
+    <>
+      The layout problem every data model has: a list, and the one thing
+      you picked from it. One selection-aware component, two presentation
+      styles, and the mobile behavior is baked in — it watches its own
+      width, so below the breakpoint the split becomes two stacked pages
+      with a back header and the overlay becomes a bottom card. Nothing
+      for the composer to do.
+    </>
+  ),
+  sections: [
+    {
+      title: "Split",
+      note: "Resizable divider; empty state until something is selected. Escape or ✕ closes.",
+      render: () => <MasterDetailDemo variant="split" />,
+    },
+    {
+      title: "Split, flipped",
+      note: "side=\"right\" when the detail is the main event and the list is navigation.",
+      render: () => <MasterDetailDemo variant="split" side="right" />,
+    },
+    {
+      title: "Overlay",
+      note: "The list owns the full width; the detail slides over it as an inspector panel — drag its edge to resize.",
+      render: () => <MasterDetailDemo variant="overlay" />,
+    },
+    {
+      title: "Narrow container = phone",
+      note: "The same split component constrained to 360px: the detail pushes in as its own page. Container-driven, so it works inside any iframe or column.",
+      render: () => <MasterDetailDemo variant="split" constrain={360} />,
+    },
+  ],
+};
+
 /* Live demos need their own state, so they're tiny components. */
+
+const MD_ITEMS = [
+  { id: 0, icon: "doc" as const, title: "Invoice #2214", sub: "Acme Corp · $1,840", status: "Paid", tone: "moss" as const, detail: "Paid Jun 12 via ACH. Net-30 terms, settled 4 days early." },
+  { id: 1, icon: "doc" as const, title: "Invoice #2215", sub: "Northwind · $920", status: "Sent", tone: "amber" as const, detail: "Sent Jun 18. Due Jul 18. Reminder scheduled for Jul 11." },
+  { id: 2, icon: "doc" as const, title: "Invoice #2216", sub: "Initech · $3,400", status: "Overdue", tone: "red" as const, detail: "Due Jun 30, now 14 days late. Two reminders sent, no reply." },
+  { id: 3, icon: "doc" as const, title: "Invoice #2217", sub: "Globex · $610", status: "Draft", tone: "neutral" as const, detail: "Draft — line items complete, awaiting PO number from Globex." },
+];
+
+function MdList({ selected, onSelect }: { selected: number | null; onSelect: (i: number) => void }) {
+  return (
+    <ListManager flat>
+      {MD_ITEMS.map((it) => (
+        <ListRow
+          key={it.id}
+          icon={it.icon}
+          title={it.title}
+          subtitle={it.sub}
+          selected={selected === it.id}
+          onClick={() => onSelect(it.id)}
+          end={<Badge tone={it.tone}>{it.status}</Badge>}
+        />
+      ))}
+    </ListManager>
+  );
+}
+
+function MdDetail({ item }: { item: (typeof MD_ITEMS)[number] }) {
+  return (
+    <div style={{ padding: 16 }} className="sb-col">
+      <KeyValue
+        rows={[
+          ["Client", item.sub.split(" · ")[0]],
+          ["Amount", item.sub.split(" · ")[1]],
+          ["Status", item.status],
+        ]}
+      />
+      <p style={{ font: "400 0.85rem/1.6 var(--font-sans)", color: "var(--ink-2)", margin: 0 }}>
+        {item.detail}
+      </p>
+    </div>
+  );
+}
+
+function MasterDetailDemo({
+  variant,
+  side,
+  constrain,
+}: {
+  variant: "split" | "overlay";
+  side?: "left" | "right";
+  constrain?: number;
+}) {
+  const [selected, setSelected] = useState<number | null>(null);
+  const item = MD_ITEMS.find((it) => it.id === selected);
+  const view = (
+    <MasterDetail
+      variant={variant}
+      side={side}
+      height={330}
+      master={<MdList selected={selected} onSelect={setSelected} />}
+      detail={item ? <MdDetail item={item} /> : null}
+      onClose={() => setSelected(null)}
+      detailTitle={item?.title}
+      detailSub={item?.sub}
+      placeholder="Select an invoice to inspect it"
+    />
+  );
+  return constrain ? <div style={{ maxWidth: constrain }}>{view}</div> : view;
+}
 
 function SheetDemo() {
   const [side, setSide] = useState<null | "right" | "bottom">(null);
@@ -1762,6 +1871,7 @@ export const STORIES: Story[] = [
   composer,
   collapsible,
   splitview,
+  masterdetail,
   takeovers,
   stats,
   tables,

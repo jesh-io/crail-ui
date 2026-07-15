@@ -3,6 +3,7 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type RefObject,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { createPortal } from "react-dom";
@@ -229,6 +230,216 @@ export function SplitView({
         <i />
       </div>
       <div className="mcp-split__pane">{right}</div>
+    </div>
+  );
+}
+
+/* ═══ MasterDetail — selection-aware list + detail layout ════════ */
+
+function useContainerWidth(ref: RefObject<HTMLDivElement>) {
+  const [width, setWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => setWidth(entries[0].contentRect.width));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [ref]);
+  return width;
+}
+
+export function MasterDetail({
+  master,
+  detail,
+  onClose,
+  variant = "split",
+  side = "left",
+  detailTitle,
+  detailSub,
+  placeholder = "Select an item to see its details",
+  initial = 38,
+  min = 24,
+  max = 62,
+  height = 420,
+  breakpoint = 560,
+}: {
+  /** The list pane — always mounted, drives selection from outside. */
+  master: ReactNode;
+  /** Detail for the current selection; null/undefined means nothing selected. */
+  detail?: ReactNode;
+  /** Called when the user dismisses the detail (Back, ✕, scrim, Escape). */
+  onClose?: () => void;
+  /** "split": two panes, resizable divider. "overlay": detail panel slides over the list. */
+  variant?: "split" | "overlay";
+  /** Which side the master (list) pane sits on in split mode. */
+  side?: "left" | "right";
+  detailTitle?: ReactNode;
+  detailSub?: ReactNode;
+  /** Split-mode empty state when nothing is selected. */
+  placeholder?: ReactNode;
+  /** Master pane width, % of the container (split mode). */
+  initial?: number;
+  min?: number;
+  max?: number;
+  /** Use "100%" or "100dvh" inside fullscreen shells. */
+  height?: number | string;
+  /** Container width (px) below which the narrow presentation kicks in:
+      split → stacked pages with a back header; overlay → bottom card. */
+  breakpoint?: number;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const width = useContainerWidth(ref);
+  const narrow = width !== null && width < breakpoint;
+  const open = detail !== null && detail !== undefined;
+
+  const [pct, setPct] = useState(initial);
+  const [panelPct, setPanelPct] = useState(46);
+  const [dragging, setDragging] = useState(false);
+
+  // Escape dismisses any over-the-list presentation (never the split pane).
+  const overlaid = open && (narrow || variant === "overlay");
+  useEffect(() => {
+    if (!overlaid || !onClose) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [overlaid, onClose]);
+
+  const drag = (e: ReactPointerEvent, apply: (pctFromLeft: number) => void) => {
+    e.preventDefault();
+    const el = ref.current;
+    if (!el) return;
+    setDragging(true);
+    const rect = el.getBoundingClientRect();
+    const move = (ev: PointerEvent) => apply(((ev.clientX - rect.left) / rect.width) * 100);
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  };
+
+  const head = (backIcon: IconName) => (
+    <div className="mcp-md__head">
+      <IconButton icon={backIcon} label="Close detail" size="sm" onClick={() => onClose?.()} />
+      <span className="mcp-md__id">
+        {detailTitle && <div className="mcp-md__title">{detailTitle}</div>}
+        {detailSub && <div className="mcp-md__sub">{detailSub}</div>}
+      </span>
+    </div>
+  );
+
+  /* Narrow: master is the page; detail pushes in as a second page (split)
+     or rises as a bottom card (overlay). */
+  if (narrow) {
+    return (
+      <div {...kit("MasterDetail")} ref={ref} className="mcp-md" style={{ height }}>
+        <div className="mcp-md__pane">{master}</div>
+        {open && variant === "split" && (
+          <div className="mcp-md__page">
+            {head("chevronLeft")}
+            <div className="mcp-md__body">{detail}</div>
+          </div>
+        )}
+        {open && variant === "overlay" && (
+          <>
+            <div className="mcp-md__scrim" onClick={() => onClose?.()} />
+            <div className="mcp-md__card" role="dialog">
+              {head("x")}
+              <div className="mcp-md__body">{detail}</div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (variant === "overlay") {
+    return (
+      <div {...kit("MasterDetail")} ref={ref} className="mcp-md" style={{ height }}>
+        <div className="mcp-md__pane">{master}</div>
+        {open && (
+          <>
+            <div className="mcp-md__scrim" onClick={() => onClose?.()} />
+            <div
+              className={cx("mcp-md__panel", dragging && "is-dragging")}
+              role="dialog"
+              style={{ width: `${panelPct}%` }}
+            >
+              <div
+                className="mcp-md__panel-grip"
+                role="separator"
+                aria-orientation="vertical"
+                tabIndex={0}
+                onPointerDown={(e) =>
+                  drag(e, (fromLeft) => setPanelPct(Math.min(72, Math.max(30, 100 - fromLeft))))
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowLeft") setPanelPct((p) => Math.min(72, p + 2));
+                  if (e.key === "ArrowRight") setPanelPct((p) => Math.max(30, p - 2));
+                }}
+              >
+                <i />
+              </div>
+              {head("x")}
+              <div className="mcp-md__body">{detail}</div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  /* Wide split: resizable panes; the divider always sizes the master. */
+  const masterFirst = side === "left";
+  const columns = masterFirst
+    ? `${pct}% 11px minmax(0, 1fr)`
+    : `minmax(0, 1fr) 11px ${pct}%`;
+  const setFromLeft = (fromLeft: number) => {
+    const next = masterFirst ? fromLeft : 100 - fromLeft;
+    setPct(Math.min(max, Math.max(min, next)));
+  };
+  const nudge = (delta: number) => setPct((p) => Math.min(max, Math.max(min, p + delta)));
+  const masterPane = <div className="mcp-md__pane">{master}</div>;
+  const detailPane = (
+    <div className="mcp-md__pane">
+      {open ? (
+        detail
+      ) : (
+        <div className="mcp-md__empty">
+          <Icon name="box" size={18} />
+          <span>{placeholder}</span>
+        </div>
+      )}
+    </div>
+  );
+  return (
+    <div
+      {...kit("MasterDetail")}
+      ref={ref}
+      className={cx("mcp-md", "mcp-md--split", dragging && "is-dragging")}
+      style={{ height, gridTemplateColumns: columns }}
+    >
+      {masterFirst ? masterPane : detailPane}
+      <div
+        className="mcp-md__handle"
+        role="separator"
+        aria-orientation="vertical"
+        aria-valuenow={Math.round(pct)}
+        tabIndex={0}
+        onPointerDown={(e) => drag(e, setFromLeft)}
+        onKeyDown={(e) => {
+          if (e.key === "ArrowLeft") nudge(masterFirst ? -2 : 2);
+          if (e.key === "ArrowRight") nudge(masterFirst ? 2 : -2);
+        }}
+      >
+        <i />
+      </div>
+      {masterFirst ? detailPane : masterPane}
     </div>
   );
 }

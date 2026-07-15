@@ -72,8 +72,15 @@ is a two-way channel: render → user acts → you hear it → you act.
   calling `requestDisplayMode("fullscreen")`, and branch layout on
   `useDisplayMode()` — mode changes re-render in place without losing state.
 - Fullscreen = own the page: wrap in a `min-height: 100dvh` container, use
-  `Tabs`/`SplitView`/`DataTable` for real navigation. This is where you build
-  full micro-apps on the fly.
+  `Tabs`/`MasterDetail`/`DataTable` for real navigation. This is where you
+  build full micro-apps on the fly.
+- For browse-and-inspect flows, reach for `MasterDetail` — a selection-aware
+  list+detail layout with a resizable divider (`variant="split"`), an
+  inspector-panel mode (`variant="overlay"`), `side="right"` to flip, and
+  mobile behavior baked in (it watches its own width: split → stacked pages
+  with a back header, overlay → bottom card). Pass the list as `master`, the
+  selected item's view as `detail` (null when nothing picked), and clear your
+  selection in `onClose`.
 
 ```jsx
 function App() {
