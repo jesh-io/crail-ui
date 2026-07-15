@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>crail-mcp harness</title>
+    <style>
+      body { margin: 0; padding: 24px; font: 13px/1.5 -apple-system, sans-serif; background: #faf9f5; }
+      body.dark { background: #262626; color: #f2f1ed; }
+      .frame { max-width: 720px; margin: 0 auto; }
+      iframe { width: 100%; border: 1px dashed #c9c4b8; border-radius: 12px; background: transparent; }
+      #feedback { max-width: 720px; margin: 16px auto 0; padding: 12px; border-radius: 8px;
+        background: rgba(0,0,0,0.06); font-family: ui-monospace, monospace; font-size: 12px;
+        white-space: pre-wrap; min-height: 40px; }
+      #status { max-width: 720px; margin: 0 auto 12px; opacity: 0.7; }
+      button { margin-bottom: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div id="status">connecting…</div>
+      <button id="theme">toggle dark</button>
+      <iframe id="app" height="480" sandbox="allow-scripts"></iframe>
+    </div>
+    <div id="feedback">— playground feedback (updateModelContext) appears here —</div>
+    <script type="module" src="/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,17 @@
+name = "crail-mcp"
+account_id = "ed4508f5dbebd48eaeac6f4535a0ad55" # Visionary Technology
+main = "worker/index.ts"
+compatibility_date = "2026-06-01"
+compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+# crail.jesh.dev/mcp is served by the Pages project's _worker.js (a Workers
+# route cannot intercept a Pages custom domain); this standalone Worker is
+# the workers.dev backup endpoint.
+
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+fallthrough = true
+
+[observability]
+enabled = true

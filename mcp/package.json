@@ -1,0 +1,45 @@
+{
+  "name": "crail-mcp",
+  "version": "0.1.0",
+  "description": "Crail as an MCP server — Claude composes crail-ui components into live inline widgets. Plug in, get Claude's design language for every tool result.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Jeshurun <mail@jesh.io> (https://jesh.dev)",
+  "homepage": "https://crail.jesh.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jesh-io/crail-ui.git",
+    "directory": "mcp"
+  },
+  "keywords": ["mcp", "model-context-protocol", "mcp-apps", "generative-ui", "claude", "crail"],
+  "bin": {
+    "crail-mcp": "./dist/server.js"
+  },
+  "files": ["dist", "dist-app/index.html", "catalog.json"],
+  "scripts": {
+    "build": "npm run build:app && npm run build:catalog && npm run build:server",
+    "build:app": "vite build",
+    "build:harness": "vite build --config vite.harness.config.ts",
+    "build:catalog": "node scripts/gen-catalog.mjs",
+    "build:server": "tsc -p tsconfig.server.json",
+    "smoke": "node scripts/smoke.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "sucrase": "^3.35.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0",
+    "vite-plugin-singlefile": "^2.0.0"
+  }
+}
