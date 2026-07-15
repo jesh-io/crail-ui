@@ -14,7 +14,11 @@ const PATHS: Record<string, JSX.Element> = {
   x: <path d="m6 6 12 12M18 6 6 18" />,
   chevronDown: <path d="m6 9.5 6 6 6-6" />,
   chevronRight: <path d="m9.5 6 6 6-6 6" />,
+  chevronLeft: <path d="m14.5 6-6 6 6 6" />,
   chevronUp: <path d="m6 14.5 6-6 6 6" />,
+  book: (
+    <path d="M12 6.5A4.5 4.5 0 0 0 7.5 2H2v15h6a4 4 0 0 1 4 4m0-14.5A4.5 4.5 0 0 1 16.5 2H22v15h-6a4 4 0 0 0-4 4m0-14.5V21" />
+  ),
   arrowRight: <path d="M4 12h16m0 0-6-6m6 6-6 6" />,
   arrowUpRight: <path d="M7 17 17 7m0 0H8m9 0v9" />,
   search: (

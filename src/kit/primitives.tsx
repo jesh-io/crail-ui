@@ -307,15 +307,30 @@ export function Textarea({
 export function Select({
   options,
   defaultValue,
+  value,
+  onChange,
 }: {
-  options: string[];
+  options: Array<string | { value: string; label: string }>;
   defaultValue?: string;
+  /** Controlled usage: pass value + onChange. Uncontrolled stays supported. */
+  value?: string;
+  onChange?: (value: string) => void;
 }) {
   return (
-    <select className="mcp-select" defaultValue={defaultValue}>
-      {options.map((o) => (
-        <option key={o}>{o}</option>
-      ))}
+    <select
+      className="mcp-select"
+      defaultValue={value === undefined ? defaultValue : undefined}
+      value={value}
+      onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+    >
+      {options.map((o) => {
+        const opt = typeof o === "string" ? { value: o, label: o } : o;
+        return (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        );
+      })}
     </select>
   );
 }
