@@ -45,7 +45,7 @@
     "dev": "vite",
     "build": "npm run build:lib && npm run build:site",
     "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json && cp src/kit/*.css dist/",
-    "build:site": "tsc --noEmit && vite build",
+    "build:site": "tsc --noEmit && mkdir -p public && cp skills/crail/SKILL.md public/skill.md && vite build",
     "preview": "vite preview",
     "prepublishOnly": "npm run build:lib"
   },
