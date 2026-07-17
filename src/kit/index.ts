@@ -1,5 +1,8 @@
 /* Crail — an MCP tool UI kit in Claude's design language.
-   Import "crail-ui" styles once, then compose components. */
+   Import "crail-ui" styles once, then compose components.
+
+   Building an MCP app? Run `npx crail-skills` to install the crail-apps
+   builder skill (the laws of MCP apps in real hosts) into .claude/skills/. */
 
 import "./tokens.css";
 import "./kit.css";

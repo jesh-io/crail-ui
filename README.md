@@ -23,6 +23,21 @@ npm install crail-ui
 React 18+ and a bundler that handles CSS imports (Vite, Next.js, etc.) are
 assumed.
 
+## For agents
+
+Building an MCP app (SEP-1865) with this kit? Install the builder skill first:
+
+```sh
+npx crail-skills
+```
+
+This copies the `crail-apps` skill into `./.claude/skills/` so it loads
+automatically in this project. It carries the laws of MCP apps in real hosts —
+sizing circularity, safe-area insets, the floating composer, display-mode
+degradation, in-place data updates — none of which are in the spec. Re-run
+after upgrading crail-ui. Also served at
+[crail.jesh.dev/skills/crail-apps/SKILL.md](https://crail.jesh.dev/skills/crail-apps/SKILL.md).
+
 ```tsx
 import { ToolCallBlock, StatCard, StatRow, ConfirmationCard } from "crail-ui";
 import "crail-ui/fonts.css"; // optional — self-hosted fonts via Fontsource

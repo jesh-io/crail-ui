@@ -133,7 +133,9 @@ THE FEEDBACK LOOP: widgets talk back. console output, render errors, and every r
 
 INTERACTIVITY: define function App() { ... } with hooks (useState etc.) for stateful widgets — tabs, forms, confirm flows, drill-ins. Widgets can request fullscreen themselves via requestDisplayMode("fullscreen") and adapt layout with useDisplayMode(). Design inline widgets as compact cards; design fullscreen as a full page (min-height 100dvh container).
 
-DATA: pass the real payload through the data argument and reference it as \`data\` in JSX — don't inline big literals into the source string.`,
+DATA: pass the real payload through the data argument and reference it as \`data\` in JSX — don't inline big literals into the source string.
+
+BUILDING YOUR OWN MCP APP with this kit (not just rendering widgets here)? Read the builder skill first: https://crail.jesh.dev/skills/crail-apps/SKILL.md — the laws of MCP apps in real hosts (sizing, safe areas, the composer, display modes, in-place updates). Or in a project with crail-ui installed: npx crail-skills.`,
     },
   );
 

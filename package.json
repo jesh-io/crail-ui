@@ -34,8 +34,13 @@
     "./fonts.css": "./dist/fonts.css"
   },
   "files": [
-    "dist"
+    "dist",
+    "skills",
+    "scripts/install-skills.mjs"
   ],
+  "bin": {
+    "crail-skills": "./scripts/install-skills.mjs"
+  },
   "sideEffects": [
     "**/*.css",
     "./dist/index.js",
@@ -44,8 +49,8 @@
   "scripts": {
     "dev": "vite",
     "build": "npm run build:lib && npm run build:site",
-    "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json && cp src/kit/*.css dist/",
-    "build:site": "tsc --noEmit && mkdir -p public && cp skills/crail/SKILL.md public/skill.md && vite build",
+    "build:lib": "rm -rf dist && tsc -p tsconfig.lib.json && cp src/kit/*.css dist/ && printf '/* crail-ui — building an MCP app with this kit? Run `npx crail-skills` to install\\n   the crail-apps builder skill (the laws of MCP apps in real hosts). */\\n' | cat - dist/index.d.ts > dist/.d.tmp && mv dist/.d.tmp dist/index.d.ts",
+    "build:site": "tsc --noEmit && mkdir -p public && cp skills/crail/SKILL.md public/skill.md && rm -rf public/skills && mkdir -p public/skills && cp -R skills/crail skills/crail-apps public/skills/ && vite build",
     "preview": "vite preview",
     "prepublishOnly": "npm run build:lib"
   },
