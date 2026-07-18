@@ -88,6 +88,7 @@ ${componentIndex(catalog)}
 
 RECIPES:
 - Dashboard: <Stack><StatRow>…</StatRow><BarChart data={data.byMonth} /><DataTable columns={…} rows={data.rows} /></Stack>
+- Rich text: <Markdown>{data.report}</Markdown> — headings, lists, links, quotes, fenced code all render natively; prefer it over hand-assembled paragraphs. Code alone: <CodeView code={data.source} language="ts" lineNumbers /> (auto-highlight + working copy button).
 - Fullscreen app shell: <Stack gap={16} style={{minHeight:"100dvh"}}><PageHeader title="…" sub="…" actions={…} onBack={() => requestDisplayMode("inline")} />…content…</Stack>
 - Confirm flow: App with useState; Button onClick={() => { setDone(true); report("user confirmed", {id: data.id}); }} → swap in a StatusBanner tone="success".
 - Drill-in: inline shows headline stats + an expand IconButton → fullscreen shows the browsing surface.

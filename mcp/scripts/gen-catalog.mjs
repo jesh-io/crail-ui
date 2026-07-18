@@ -31,7 +31,7 @@ for (const [file, groupLabel] of GROUPS) {
 
   // export declare function Name(...): ...;
   for (const match of content.matchAll(
-    /export declare function (\w+)([\s\S]*?;)(?=\r?\n(?:export|declare|import|$))/g,
+    /export declare function (\w+)([\s\S]*?;)(?=\r?\n(?:export|declare|import|\/\/#|$))/g,
   )) {
     const [, name, rest] = match;
     if (SKIP.has(name)) continue;
@@ -46,7 +46,7 @@ for (const [file, groupLabel] of GROUPS) {
 
   // export declare const Name: ...;
   for (const match of content.matchAll(
-    /export declare const (\w+):([\s\S]*?;)(?=\r?\n(?:export|declare|import|$))/g,
+    /export declare const (\w+):([\s\S]*?;)(?=\r?\n(?:export|declare|import|\/\/#|$))/g,
   )) {
     const [, name, rest] = match;
     if (SKIP.has(name)) continue;

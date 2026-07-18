@@ -64,13 +64,14 @@ const GITHUB_URL = "https://github.com/jesh-io/crail-ui";
 
 /* ── Nav data ────────────────────────────────────────────────── */
 
-const GROUP_ORDER = ["Foundations", "Primitives", "Chat", "Layout", "Tool widgets"];
+const GROUP_ORDER = ["Foundations", "Primitives", "Layout", "Data", "Flows", "Chat"];
 const GROUP_ICONS: Record<string, IconName> = {
   Foundations: "box",
   Primitives: "sliders",
-  Chat: "spark",
   Layout: "columns",
-  "Tool widgets": "wrench",
+  Data: "chart",
+  Flows: "check",
+  Chat: "spark",
 };
 
 function ThemeToggle({
@@ -174,9 +175,10 @@ const START_LINKS: Array<{ id: string; label: string; icon: IconName }> = [
 const GROUP_LABELS: Record<string, string> = {
   Foundations: "Foundations",
   Primitives: "Primitives",
-  Chat: "Chat chrome",
   Layout: "Layout",
-  "Tool widgets": "Widgets",
+  Data: "Data & content",
+  Flows: "Flows & status",
+  Chat: "Chat chrome",
 };
 
 function NavSections({
@@ -195,11 +197,41 @@ function NavSections({
     return map;
   }, []);
 
+  // Accordion library: only the group you're in stays open.
+  const [openGroups, setOpenGroups] = useState<Set<string>>(
+    () => new Set(activeStory ? [activeStory.group] : []),
+  );
+  useEffect(() => {
+    if (activeStory) setOpenGroups(new Set([activeStory.group]));
+  }, [activeStory]);
+  const toggleGroup = (g: string) =>
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(g)) next.delete(g);
+      else next.add(g);
+      return next;
+    });
+
+  const [filter, setFilter] = useState("");
+  const q = filter.trim().toLowerCase();
+  const matches = q ? STORIES.filter((s) => s.nav.toLowerCase().includes(q)) : [];
+
   const onHome = !activeStory && !activeScenario;
+
+  const storyButton = (s: Story) => (
+    <button
+      key={s.id}
+      className={`sb-nav-item ${activeStory?.id === s.id ? "sb-nav-item--active" : ""}`}
+      onClick={() => onGo(`story/${s.id}`)}
+    >
+      <Icon name={GROUP_ICONS[s.group]} size={13} />
+      {s.nav}
+    </button>
+  );
 
   return (
     <>
-      {/* The visitor's path: what is it → see it work → wire it up. */}
+      {/* The visitor's path: what is it → see it work → the parts list. */}
       <div>
         <div className="sb-nav-group">Start</div>
         <button
@@ -217,25 +249,7 @@ function NavSections({
         ))}
       </div>
 
-      {/* The library: everything Claude composes with. */}
-      <div className="sb-nav-banner">Component library</div>
-      {[...grouped.entries()].map(([group, stories]) => (
-        <div key={group}>
-          <div className="sb-nav-group">{GROUP_LABELS[group] ?? group}</div>
-          {stories.map((s) => (
-            <button
-              key={s.id}
-              className={`sb-nav-item ${
-                activeStory?.id === s.id ? "sb-nav-item--active" : ""
-              }`}
-              onClick={() => onGo(`story/${s.id}`)}
-            >
-              <Icon name={GROUP_ICONS[group]} size={13} />
-              {s.nav}
-            </button>
-          ))}
-        </div>
-      ))}
+      {/* See it working before the parts bin. */}
       <div>
         <div className="sb-nav-group">Examples</div>
         {SCENARIOS.map((sc) => (
@@ -251,6 +265,50 @@ function NavSections({
           </button>
         ))}
       </div>
+
+      {/* The library: everything Claude composes with. */}
+      <div className="sb-nav-banner">Component library</div>
+      <div className="sb-filter">
+        <Icon name="search" size={12} />
+        <input
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          placeholder="Filter components…"
+          aria-label="Filter components"
+        />
+        {filter && (
+          <button className="sb-filter__clear" aria-label="Clear filter" onClick={() => setFilter("")}>
+            <Icon name="x" size={11} />
+          </button>
+        )}
+      </div>
+      {q ? (
+        <div>
+          {matches.length ? (
+            matches.map(storyButton)
+          ) : (
+            <div className="sb-filter__none">Nothing matches "{filter.trim()}"</div>
+          )}
+        </div>
+      ) : (
+        [...grouped.entries()].map(([group, stories]) => {
+          const open = openGroups.has(group);
+          return (
+            <div key={group}>
+              <button
+                className="sb-nav-groupbtn"
+                onClick={() => toggleGroup(group)}
+                aria-expanded={open}
+              >
+                <Icon name="chevronRight" size={11} className={`sb-nav-chev ${open ? "is-open" : ""}`} />
+                {GROUP_LABELS[group] ?? group}
+                <span className="sb-nav-count">{stories.length}</span>
+              </button>
+              {open && stories.map(storyButton)}
+            </div>
+          );
+        })
+      )}
     </>
   );
 }

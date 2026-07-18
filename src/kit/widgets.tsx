@@ -1,6 +1,6 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Icon, type IconName } from "./icons";
-import { Avatar, Badge, Button, IconButton, KeyValue, type Tone } from "./primitives";
+import { Avatar, Badge, Button, CopyButton, IconButton, KeyValue, type Tone } from "./primitives";
 
 const kit = (name: string) => ({ "data-kit": name });
 
@@ -924,6 +924,373 @@ export function EntityCard({
       {actions && (
         <div style={{ display: "flex", gap: 8, marginTop: 14 }}>{actions}</div>
       )}
+    </div>
+  );
+}
+
+/* CodeView — syntax-highlighted code from a raw string --------------- */
+
+type TokLang = {
+  comments: RegExp[];
+  keywords: Set<string>;
+};
+
+const KW_JS =
+  "const let var function return if else for while do switch case break continue new class extends import export from default async await try catch finally throw typeof instanceof in of yield static get set this super null undefined true false void delete interface type enum implements readonly as satisfies";
+const KW_PY =
+  "def return if elif else for while break continue import from as class try except finally raise with lambda pass yield global nonlocal assert del not and or in is None True False async await match case";
+const KW_BASH =
+  "if then else elif fi for while do done case esac function in echo exit return local export set unset readonly shift source true false";
+const KW_SQL =
+  "select from where insert into values update set delete join left right inner outer on group by order having limit offset create table alter drop index primary key foreign references not null unique default as distinct union all and or in like between is exists count sum avg min max";
+const KW_CSS = "";
+
+function langSpec(language: string): TokLang {
+  const l = language.toLowerCase();
+  if (["py", "python"].includes(l))
+    return { comments: [/#[^\n]*/y], keywords: new Set(KW_PY.split(" ")) };
+  if (["sh", "bash", "shell", "zsh"].includes(l))
+    return { comments: [/#[^\n]*/y], keywords: new Set(KW_BASH.split(" ")) };
+  if (l === "sql")
+    return { comments: [/--[^\n]*/y], keywords: new Set(KW_SQL.split(" ")) };
+  if (l === "css")
+    return { comments: [/\/\*[\s\S]*?\*\//y], keywords: new Set(KW_CSS.split(" ").filter(Boolean)) };
+  if (["html", "xml", "svg"].includes(l))
+    return { comments: [/<!--[\s\S]*?-->/y], keywords: new Set() };
+  // js / ts / jsx / tsx / json / java / c-like default
+  return {
+    comments: [/\/\/[^\n]*/y, /\/\*[\s\S]*?\*\//y],
+    keywords: new Set(KW_JS.split(" ")),
+  };
+}
+
+const STRING_RE = /"(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|`(?:[^`\\]|\\.)*`/y;
+const NUMBER_RE = /\b(?:0[xX][\da-fA-F_]+|\d[\d_]*(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/y;
+const IDENT_RE = /[A-Za-z_$][\w$]*/y;
+const TAG_RE = /<\/?[A-Za-z][\w-]*/y;
+
+export function highlightCode(code: string, language: string): ReactNode[] {
+  const spec = langSpec(language);
+  const html = ["html", "xml", "svg"].includes(language.toLowerCase());
+  const out: ReactNode[] = [];
+  let plain = "";
+  let i = 0;
+  let k = 0;
+  const flush = () => {
+    if (plain) out.push(plain);
+    plain = "";
+  };
+  const tryMatch = (re: RegExp): string | null => {
+    re.lastIndex = i;
+    const m = re.exec(code);
+    return m && m.index === i ? m[0] : null;
+  };
+  while (i < code.length) {
+    let matched: { text: string; cls: string } | null = null;
+    for (const c of spec.comments) {
+      const t = tryMatch(c);
+      if (t) {
+        matched = { text: t, cls: "tok-com" };
+        break;
+      }
+    }
+    if (!matched) {
+      const s = tryMatch(STRING_RE);
+      if (s) matched = { text: s, cls: "tok-str" };
+    }
+    if (!matched && html) {
+      const t = tryMatch(TAG_RE);
+      if (t) matched = { text: t, cls: "tok-kw" };
+    }
+    if (!matched) {
+      const n = tryMatch(NUMBER_RE);
+      if (n) matched = { text: n, cls: "tok-num" };
+    }
+    if (!matched) {
+      const id = tryMatch(IDENT_RE);
+      if (id) {
+        if (spec.keywords.has(id)) matched = { text: id, cls: "tok-kw" };
+        else if (code[i + id.length] === "(") matched = { text: id, cls: "tok-fn" };
+        else {
+          plain += id;
+          i += id.length;
+          continue;
+        }
+      }
+    }
+    if (matched) {
+      flush();
+      out.push(
+        <span key={k++} className={matched.cls}>
+          {matched.text}
+        </span>,
+      );
+      i += matched.text.length;
+    } else {
+      plain += code[i];
+      i++;
+    }
+  }
+  flush();
+  return out;
+}
+
+export function CodeView({
+  code,
+  language = "text",
+  title,
+  lineNumbers = false,
+  maxHeight,
+}: {
+  /** Raw source — highlighting is automatic (js/ts, python, bash, sql, css, html, json). */
+  code: string;
+  language?: string;
+  /** Bar label; defaults to the language. */
+  title?: string;
+  lineNumbers?: boolean;
+  /** Scroll inside beyond this height (px). */
+  maxHeight?: number;
+}) {
+  const trimmed = code.replace(/\n$/, "");
+  const body = lineNumbers ? (
+    <table className="mcp-codeview__table">
+      <tbody>
+        {trimmed.split("\n").map((line, n) => (
+          <tr key={n}>
+            <td className="mcp-codeview__num">{n + 1}</td>
+            <td className="mcp-codeview__line">{highlightCode(line, language)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  ) : (
+    highlightCode(trimmed, language)
+  );
+  return (
+    <div {...kit("CodeView")} className="mcp-code mcp-codeview">
+      <div className="mcp-code__bar">
+        <span className="mcp-code__lang">{title ?? language}</span>
+        <CopyButton text={trimmed} />
+      </div>
+      <pre className="mcp-code__pre" style={maxHeight ? { maxHeight, overflow: "auto" } : undefined}>
+        {body}
+      </pre>
+    </div>
+  );
+}
+
+/* Tree — expandable nested items (files, JSON, hierarchies) ---------- */
+
+export type TreeItem = {
+  label: string;
+  icon?: IconName;
+  meta?: ReactNode;
+  children?: TreeItem[];
+};
+
+function TreeRow({
+  item,
+  path,
+  depth,
+  open,
+  toggle,
+  onSelect,
+  selected,
+}: {
+  item: TreeItem;
+  path: string;
+  depth: number;
+  open: Set<string>;
+  toggle: (p: string) => void;
+  onSelect?: (path: string, item: TreeItem) => void;
+  selected?: string;
+}) {
+  const branch = !!item.children?.length;
+  const isOpen = open.has(path);
+  return (
+    <>
+      <div
+        className={cx("mcp-tree__row", selected === path && "is-selected")}
+        style={{ paddingLeft: 8 + depth * 16 }}
+        role="treeitem"
+        aria-expanded={branch ? isOpen : undefined}
+        tabIndex={0}
+        onClick={() => {
+          if (branch) toggle(path);
+          onSelect?.(path, item);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (branch) toggle(path);
+            onSelect?.(path, item);
+          }
+        }}
+      >
+        {branch ? (
+          <Icon name="chevronRight" size={11} className={cx("mcp-tree__chev", isOpen && "is-open")} />
+        ) : (
+          <span className="mcp-tree__spacer" />
+        )}
+        <Icon name={item.icon ?? (branch ? "folder" : "doc")} size={13} className="mcp-tree__glyph" />
+        <span className="mcp-tree__label">{item.label}</span>
+        {item.meta && <span className="mcp-tree__meta">{item.meta}</span>}
+      </div>
+      {branch &&
+        isOpen &&
+        item.children!.map((c) => (
+          <TreeRow
+            key={c.label}
+            item={c}
+            path={`${path}/${c.label}`}
+            depth={depth + 1}
+            open={open}
+            toggle={toggle}
+            onSelect={onSelect}
+            selected={selected}
+          />
+        ))}
+    </>
+  );
+}
+
+export function Tree({
+  items,
+  defaultOpen = 1,
+  onSelect,
+  selected,
+}: {
+  items: TreeItem[];
+  /** How many levels start expanded. */
+  defaultOpen?: number;
+  /** path is the slash-joined labels, e.g. "src/kit/layout.tsx". */
+  onSelect?: (path: string, item: TreeItem) => void;
+  selected?: string;
+}) {
+  const [open, setOpen] = useState<Set<string>>(() => {
+    const s = new Set<string>();
+    const walk = (list: TreeItem[], prefix: string, depth: number) => {
+      for (const it of list) {
+        const p = prefix ? `${prefix}/${it.label}` : it.label;
+        if (it.children?.length && depth < defaultOpen) {
+          s.add(p);
+          walk(it.children, p, depth + 1);
+        }
+      }
+    };
+    walk(items, "", 0);
+    return s;
+  });
+  const toggle = (p: string) =>
+    setOpen((prev) => {
+      const next = new Set(prev);
+      if (next.has(p)) next.delete(p);
+      else next.add(p);
+      return next;
+    });
+  return (
+    <div {...kit("Tree")} className="mcp-tree" role="tree">
+      {items.map((it) => (
+        <TreeRow
+          key={it.label}
+          item={it}
+          path={it.label}
+          depth={0}
+          open={open}
+          toggle={toggle}
+          onSelect={onSelect}
+          selected={selected}
+        />
+      ))}
+    </div>
+  );
+}
+
+/* Markdown — subset renderer for AI-authored rich text --------------- */
+
+function mdInline(text: string, k = { n: 0 }): ReactNode[] {
+  const out: ReactNode[] = [];
+  const re =
+    /(\*\*|__)(.+?)\1|(\*|_)([^*_]+?)\3|~~(.+?)~~|`([^`]+)`|\[([^\]]+)\]\(([^)\s]+)\)/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    if (m[2] != null) out.push(<strong key={k.n++}>{mdInline(m[2], k)}</strong>);
+    else if (m[4] != null) out.push(<em key={k.n++}>{mdInline(m[4], k)}</em>);
+    else if (m[5] != null) out.push(<s key={k.n++}>{mdInline(m[5], k)}</s>);
+    else if (m[6] != null) out.push(<code key={k.n++}>{m[6]}</code>);
+    else if (m[7] != null)
+      out.push(
+        <a key={k.n++} href={m[8]} target="_blank" rel="noreferrer noopener">
+          {mdInline(m[7], k)}
+        </a>,
+      );
+    last = re.lastIndex;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+
+export function Markdown({ children }: { /** Markdown source. */ children: string }) {
+  const lines = children.split("\n");
+  const blocks: ReactNode[] = [];
+  let k = 0;
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (!line.trim()) {
+      i++;
+      continue;
+    }
+    const fence = line.match(/^```(\w*)/);
+    if (fence) {
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].startsWith("```")) buf.push(lines[i++]);
+      i++;
+      blocks.push(<CodeView key={k++} code={buf.join("\n")} language={fence[1] || "text"} />);
+      continue;
+    }
+    const h = line.match(/^(#{1,4})\s+(.*)/);
+    if (h) {
+      const Tag = (["h1", "h2", "h3", "h4"] as const)[h[1].length - 1];
+      blocks.push(<Tag key={k++}>{mdInline(h[2])}</Tag>);
+      i++;
+      continue;
+    }
+    if (/^(-{3,}|\*{3,})\s*$/.test(line)) {
+      blocks.push(<hr key={k++} />);
+      i++;
+      continue;
+    }
+    if (line.startsWith(">")) {
+      const buf: string[] = [];
+      while (i < lines.length && lines[i].startsWith(">")) buf.push(lines[i++].replace(/^>\s?/, ""));
+      blocks.push(<blockquote key={k++}>{mdInline(buf.join(" "))}</blockquote>);
+      continue;
+    }
+    const li = line.match(/^(\s*)([-*+]|\d+\.)\s+/);
+    if (li) {
+      const ordered = /\d/.test(li[2]);
+      const items: ReactNode[] = [];
+      while (i < lines.length) {
+        const it = lines[i].match(/^(\s*)([-*+]|\d+\.)\s+(.*)/);
+        if (!it) break;
+        items.push(<li key={k++}>{mdInline(it[3])}</li>);
+        i++;
+      }
+      blocks.push(ordered ? <ol key={k++}>{items}</ol> : <ul key={k++}>{items}</ul>);
+      continue;
+    }
+    const buf: string[] = [];
+    while (i < lines.length && lines[i].trim() && !/^(#{1,4}\s|```|>|(\s*([-*+]|\d+\.)\s))/.test(lines[i]))
+      buf.push(lines[i++]);
+    blocks.push(<p key={k++}>{mdInline(buf.join(" "))}</p>);
+  }
+  return (
+    <div {...kit("Markdown")} className="mcp-prose">
+      {blocks}
     </div>
   );
 }

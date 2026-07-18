@@ -65,6 +65,12 @@ import {
   FileGrid,
   MediaCard,
   StatusBanner,
+  Markdown,
+  CodeView,
+  Tree,
+  Breadcrumbs,
+  Pagination,
+  CopyButton,
   ConfirmationCard,
   ElicitationCard,
   ProgressTracker,
@@ -1450,6 +1456,166 @@ function ConsoleApp({ onExit }: { onExit: () => void }) {
   );
 }
 
+const navigation: Story = {
+  id: "navigation",
+  nav: "Navigation bits",
+  group: "Primitives",
+  title: "Navigation bits",
+  lede: (
+    <>
+      The small wayfinding parts: <code>Breadcrumbs</code> for depth,{" "}
+      <code>Pagination</code> for browse surfaces, <code>CopyButton</code> for
+      anything worth taking with you. All three are constant companions of
+      fullscreen apps.
+    </>
+  ),
+  sections: [
+    {
+      title: "Breadcrumbs",
+      note: "Earlier segments take onClick; the last one is the current location.",
+      render: () => (
+        <Breadcrumbs
+          items={[
+            { label: "Projects", icon: "folder", onClick: () => {} },
+            { label: "crail-ui", onClick: () => {} },
+            { label: "Invoice #2216" },
+          ]}
+        />
+      ),
+    },
+    {
+      title: "Pagination",
+      note: "Windowed numbers with ellipses; summary rides along.",
+      render: () => <PaginationDemo />,
+    },
+    {
+      title: "Copy button",
+      note: "Flips to a moss check for a beat after copying.",
+      render: () => (
+        <div className="sb-row">
+          <CopyButton text="https://crail.jesh.dev/mcp" label="Copy endpoint" />
+          <CopyButton text="inv_2216" label="Copy ID" size="md" />
+          <CopyButton text="npx crail-skills" />
+        </div>
+      ),
+    },
+  ],
+};
+
+const content: Story = {
+  id: "content",
+  nav: "Markdown & code",
+  group: "Data",
+  title: "Markdown & code",
+  lede: (
+    <>
+      Rich text without hand-assembly. <code>Markdown</code> renders the
+      subset models actually write — headings, emphasis, lists, quotes,
+      links, and fenced code — and <code>CodeView</code> highlights raw
+      source automatically (JS/TS, Python, Bash, SQL, CSS, HTML), with a
+      working copy button. Fences inside Markdown route through CodeView.
+    </>
+  ),
+  sections: [
+    {
+      title: "Markdown",
+      note: "One string in, native-feeling prose out.",
+      render: () => (
+        <div style={{ maxWidth: 560 }}>
+          <Markdown>{[
+            "## Deploy summary",
+            "The rollout finished in **4m 12s** with *zero* failed checks — details in [the run log](https://example.com).",
+            "",
+            "> Rollbacks stay armed for 24 hours.",
+            "",
+            "1. Build verified on `node@22`",
+            "2. Canary served 5% for 10 minutes",
+            "3. Full fleet promoted",
+            "",
+            "```ts",
+            "const status = await deploy({ target: \"production\" });",
+            "if (!status.ok) rollback(); // armed until tomorrow",
+            "```",
+          ].join("\n")}</Markdown>
+        </div>
+      ),
+    },
+    {
+      title: "Code view",
+      note: "Raw string + language. Line numbers optional; copy is real.",
+      render: () => (
+        <CodeView
+          language="python"
+          title="fetch_invoices.py"
+          lineNumbers
+          code={[
+            "# Pull unpaid invoices and total them",
+            "def outstanding(client_id: str) -> float:",
+            "    rows = db.query(\"SELECT amount FROM invoices WHERE paid = 0\")",
+            "    return sum(r.amount for r in rows)",
+          ].join("\n")}
+        />
+      ),
+    },
+  ],
+};
+
+const treeview: Story = {
+  id: "treeview",
+  nav: "Tree",
+  group: "Data",
+  title: "Tree",
+  lede: (
+    <>
+      Expandable hierarchy for file listings, nested configs, or anything
+      recursive an MCP tool returns. Branch rows toggle; every row can
+      select; icons default to folder/doc by shape.
+    </>
+  ),
+  sections: [
+    {
+      title: "File tree",
+      note: "defaultOpen={1} expands the first level. Selection is controlled.",
+      render: () => <TreeDemo />,
+    },
+  ],
+};
+
+function PaginationDemo() {
+  const [page, setPage] = useState(4);
+  return <Pagination page={page} pageCount={12} onChange={setPage} summary="214 records" />;
+}
+
+function TreeDemo() {
+  const [sel, setSel] = useState<string | undefined>("src/kit/layout.tsx");
+  return (
+    <div style={{ maxWidth: 380 }}>
+      <Tree
+        selected={sel}
+        onSelect={(path, item) => !item.children && setSel(path)}
+        items={[
+          {
+            label: "src",
+            children: [
+              {
+                label: "kit",
+                children: [
+                  { label: "layout.tsx", meta: "18 kB" },
+                  { label: "widgets.tsx", meta: "31 kB" },
+                  { label: "kit.css", meta: "42 kB" },
+                ],
+              },
+              { label: "showcase", children: [{ label: "App.tsx", meta: "24 kB" }] },
+            ],
+          },
+          { label: "mcp", children: [{ label: "src", children: [{ label: "core.ts", meta: "9 kB" }] }] },
+          { label: "package.json", icon: "doc", meta: "2 kB" },
+        ]}
+      />
+    </div>
+  );
+}
+
 /* Live demos need their own state, so they're tiny components. */
 
 const MD_ITEMS = [
@@ -1694,7 +1860,7 @@ const takeovers: Story = {
 const stats: Story = {
   id: "stats",
   nav: "Stats & Charts",
-  group: "Tool widgets",
+  group: "Data",
   title: "Stats & charts",
   lede: (
     <>
@@ -1765,7 +1931,7 @@ const stats: Story = {
 const tables: Story = {
   id: "tables",
   nav: "Data table",
-  group: "Tool widgets",
+  group: "Data",
   title: "Data table",
   lede: (
     <>
@@ -1809,7 +1975,7 @@ const tables: Story = {
 const lists: Story = {
   id: "lists",
   nav: "List manager",
-  group: "Tool widgets",
+  group: "Data",
   title: "List manager",
   lede: (
     <>
@@ -1865,7 +2031,7 @@ const lists: Story = {
 const files: Story = {
   id: "files",
   nav: "Files & Media",
-  group: "Tool widgets",
+  group: "Data",
   title: "Files & media",
   lede: (
     <>
@@ -1909,7 +2075,7 @@ const files: Story = {
 const approvals: Story = {
   id: "approvals",
   nav: "Confirmation",
-  group: "Tool widgets",
+  group: "Flows",
   title: "Confirmation cards",
   lede: (
     <>
@@ -1958,7 +2124,7 @@ const approvals: Story = {
 const elicitation: Story = {
   id: "elicitation",
   nav: "Elicitation",
-  group: "Tool widgets",
+  group: "Flows",
   title: "Elicitation",
   lede: (
     <>
@@ -2018,7 +2184,7 @@ const elicitation: Story = {
 const progress: Story = {
   id: "progress",
   nav: "Progress & Tasks",
-  group: "Tool widgets",
+  group: "Flows",
   title: "Progress & tasks",
   lede: (
     <>
@@ -2063,7 +2229,7 @@ const progress: Story = {
 const logsdiffs: Story = {
   id: "logs",
   nav: "Logs & Diffs",
-  group: "Tool widgets",
+  group: "Flows",
   title: "Logs & diffs",
   lede: (
     <>
@@ -2118,7 +2284,7 @@ const logsdiffs: Story = {
 const timelines: Story = {
   id: "timeline",
   nav: "Timeline & Entities",
-  group: "Tool widgets",
+  group: "Flows",
   title: "Timeline & entities",
   lede: (
     <>
@@ -2193,6 +2359,7 @@ export const STORIES: Story[] = [
   toolcalls,
   codeblocks,
   composer,
+  navigation,
   collapsible,
   splitview,
   masterdetail,
@@ -2203,6 +2370,8 @@ export const STORIES: Story[] = [
   tables,
   lists,
   files,
+  content,
+  treeview,
   approvals,
   elicitation,
   progress,

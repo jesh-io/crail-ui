@@ -708,3 +708,140 @@ export function EmptyState({
     </div>
   );
 }
+
+/* CopyButton -------------------------------------------------------- */
+
+export function CopyButton({
+  text,
+  label,
+  size = "sm",
+}: {
+  /** The string copied to the clipboard. */
+  text: string;
+  /** Optional visible label next to the icon (e.g. "Copy"). */
+  label?: string;
+  size?: "sm" | "md";
+}) {
+  const [copied, setCopied] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const copy = () => {
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(true);
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(() => setCopied(false), 1400);
+    });
+  };
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
+  return (
+    <button
+      {...kit("CopyButton")}
+      className={cx("mcp-copybtn", size === "md" && "mcp-copybtn--md", copied && "is-copied")}
+      onClick={copy}
+      aria-label={copied ? "Copied" : (label ?? "Copy")}
+      title={copied ? "Copied" : (label ?? "Copy")}
+    >
+      <Icon name={copied ? "check" : "copy"} size={size === "md" ? 14 : 12} />
+      {label && <span>{copied ? "Copied" : label}</span>}
+    </button>
+  );
+}
+
+/* Breadcrumbs ------------------------------------------------------- */
+
+export function Breadcrumbs({
+  items,
+}: {
+  /** Trail in order; the last item is the current location. Give earlier items onClick. */
+  items: Array<{ label: ReactNode; icon?: IconName; onClick?: () => void }>;
+}) {
+  return (
+    <nav {...kit("Breadcrumbs")} className="mcp-crumbs" aria-label="Breadcrumb">
+      {items.map((it, i) => {
+        const last = i === items.length - 1;
+        const inner = (
+          <>
+            {it.icon && <Icon name={it.icon} size={12} />}
+            {it.label}
+          </>
+        );
+        return (
+          <span key={i} className="mcp-crumbs__seg">
+            {last || !it.onClick ? (
+              <span className={cx("mcp-crumbs__item", last && "is-current")} aria-current={last ? "page" : undefined}>
+                {inner}
+              </span>
+            ) : (
+              <button className="mcp-crumbs__item mcp-crumbs__item--link" onClick={it.onClick}>
+                {inner}
+              </button>
+            )}
+            {!last && <Icon name="chevronRight" size={11} className="mcp-crumbs__sep" />}
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
+/* Pagination -------------------------------------------------------- */
+
+export function Pagination({
+  page,
+  pageCount,
+  onChange,
+  summary,
+}: {
+  /** Current page, 1-based. */
+  page: number;
+  pageCount: number;
+  onChange: (page: number) => void;
+  /** Optional trailing text, e.g. "214 records". */
+  summary?: string;
+}) {
+  const pages: Array<number | "…"> = [];
+  const push = (p: number | "…") => pages[pages.length - 1] !== p && pages.push(p);
+  for (let p = 1; p <= pageCount; p++) {
+    if (p === 1 || p === pageCount || Math.abs(p - page) <= 1) push(p);
+    else push("…");
+  }
+  return (
+    <div {...kit("Pagination")} className="mcp-pages">
+      <button
+        className="mcp-pages__btn"
+        disabled={page <= 1}
+        onClick={() => onChange(page - 1)}
+        aria-label="Previous page"
+      >
+        <Icon name="chevronLeft" size={13} />
+      </button>
+      {pages.map((p, i) =>
+        p === "…" ? (
+          <span key={`e${i}`} className="mcp-pages__ellipsis">…</span>
+        ) : (
+          <button
+            key={p}
+            className={cx("mcp-pages__btn", "mcp-pages__btn--num", p === page && "is-current")}
+            aria-current={p === page ? "page" : undefined}
+            onClick={() => onChange(p)}
+          >
+            {p}
+          </button>
+        ),
+      )}
+      <button
+        className="mcp-pages__btn"
+        disabled={page >= pageCount}
+        onClick={() => onChange(page + 1)}
+        aria-label="Next page"
+      >
+        <Icon name="chevronRight" size={13} />
+      </button>
+      {summary && <span className="mcp-pages__summary">{summary}</span>}
+    </div>
+  );
+}
