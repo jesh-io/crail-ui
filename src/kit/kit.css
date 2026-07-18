@@ -219,6 +219,70 @@ html {
   cursor: pointer;
 }
 
+/* ChipInput: tokenized multi-value entry */
+.mcp-chipinput {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  background: var(--paper-0);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  width: 100%;
+  cursor: text;
+  transition: border-color var(--dur-fast), box-shadow var(--dur-fast);
+}
+.mcp-chipinput:focus-within {
+  border-color: var(--crail);
+  box-shadow: 0 0 0 3px var(--crail-soft);
+}
+.mcp-chipinput__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font: 500 var(--text-sm) / 1.3 var(--font-sans);
+  color: var(--ink-1);
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 4px 2px 9px;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.mcp-chipinput__chip--invalid {
+  border-color: var(--clay-red);
+  color: var(--clay-red);
+}
+.mcp-chipinput__x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 999px;
+}
+.mcp-chipinput__x:hover {
+  color: var(--ink-1);
+  background: var(--paper-3);
+}
+.mcp-chipinput__field {
+  flex: 1;
+  min-width: 120px;
+  border: 0;
+  outline: none;
+  background: none;
+  font: 400 var(--text-md) / 1.4 var(--font-sans);
+  color: var(--ink-1);
+  padding: 3px 2px;
+}
+.mcp-chipinput__field::placeholder {
+  color: var(--ink-3);
+}
+
 /* Checkbox / radio */
 .mcp-check {
   display: inline-flex;

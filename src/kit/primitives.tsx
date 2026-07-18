@@ -252,6 +252,94 @@ export function Input({
   );
 }
 
+/* ChipInput ---------------------------------------------------- */
+
+/**
+ * Tokenized multi-value input (email recipients &c). Enter / comma / space /
+ * blur commit the pending text as a chip; Backspace on empty input removes
+ * the last chip; paste splits on commas/whitespace. `validate` tints chips
+ * that fail it — they stay visible and removable, never silently dropped.
+ */
+export function ChipInput({
+  value,
+  onChange,
+  placeholder,
+  validate,
+}: {
+  value: string[];
+  onChange: (v: string[]) => void;
+  placeholder?: string;
+  validate?: (token: string) => boolean;
+}) {
+  const [text, setText] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const commit = (raw: string) => {
+    const tokens = raw
+      .split(/[,;\s]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (tokens.length === 0) return;
+    const next = [...value];
+    for (const t of tokens) if (!next.includes(t)) next.push(t);
+    onChange(next);
+    setText("");
+  };
+
+  return (
+    <div
+      {...kit("ChipInput")}
+      className="mcp-chipinput"
+      onClick={() => inputRef.current?.focus()}
+    >
+      {value.map((t) => (
+        <span
+          key={t}
+          className={cx(
+            "mcp-chipinput__chip",
+            validate && !validate(t) && "mcp-chipinput__chip--invalid"
+          )}
+        >
+          {t}
+          <button
+            type="button"
+            className="mcp-chipinput__x"
+            aria-label={`Remove ${t}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onChange(value.filter((x) => x !== t));
+            }}
+          >
+            <Icon name="x" size={11} />
+          </button>
+        </span>
+      ))}
+      <input
+        ref={inputRef}
+        className="mcp-chipinput__field"
+        value={text}
+        placeholder={value.length === 0 ? placeholder : undefined}
+        onChange={(e) => {
+          const v = e.target.value;
+          // Typed separators are intercepted on keydown — a separator arriving
+          // through onChange is a PASTE; commit it whole.
+          if (/[,;\s]/.test(v) && v.trim()) commit(v);
+          else setText(v);
+        }}
+        onKeyDown={(e: { key: string; preventDefault(): void }) => {
+          if (e.key === "Enter" || e.key === "," || e.key === " ") {
+            e.preventDefault();
+            if (text.trim()) commit(text);
+          } else if (e.key === "Backspace" && text === "" && value.length > 0) {
+            onChange(value.slice(0, -1));
+          }
+        }}
+        onBlur={() => text.trim() && commit(text)}
+      />
+    </div>
+  );
+}
+
 export function Textarea({
   placeholder,
   value,

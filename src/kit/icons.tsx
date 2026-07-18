@@ -73,6 +73,9 @@ const PATHS: Record<string, JSX.Element> = {
     </>
   ),
   list: <path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" />,
+  bold: <path d="M7 5h6.5a3.5 3.5 0 0 1 0 7H7zM7 12h7.5a3.5 3.5 0 0 1 0 7H7z" />,
+  italic: <path d="M11 5h6M7 19h6M14 5l-4 14" />,
+  listNumbered: <path d="M10 6h10M10 12h10M10 18h10M4 6h1v3M4 9h2M4 15h2a1 1 0 0 1 0 2l-2 2h3" />,
   menu: <path d="M4 7h16M4 12h16M4 17h16" />,
   columns: (
     <>

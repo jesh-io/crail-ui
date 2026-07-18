@@ -23,6 +23,7 @@ import {
   Field,
   Input,
   Textarea,
+  ChipInput,
   Select,
   Checkbox,
   Radio,
@@ -439,8 +440,30 @@ const inputs: Story = {
         </div>
       ),
     },
+    {
+      title: "Chip input",
+      note: "Enter, comma, space, or blur commits a token; Backspace on empty removes the last; paste splits on separators. Tokens failing validate() tint clay-red but stay removable.",
+      render: () => <ChipInputDemo />,
+    },
   ],
 };
+
+function ChipInputDemo() {
+  const [emails, setEmails] = useState<string[]>(["ada@jesh.io", "grace@jesh.io"]);
+  const isEmail = (t: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(t);
+  return (
+    <div style={{ maxWidth: 480 }}>
+      <Field label="Share with" hint="Type an address and press Enter. Paste a list to add many.">
+        <ChipInput
+          value={emails}
+          onChange={setEmails}
+          validate={isEmail}
+          placeholder="name@domain.com"
+        />
+      </Field>
+    </div>
+  );
+}
 
 const selection: Story = {
   id: "selection",
